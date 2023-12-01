@@ -39,24 +39,15 @@ impl Iterator for Numbers<'_> {
             self.chars = &self.chars[1..];
 
             match window {
-                ['1', ..] => return Some(1),
-                ['2', ..] => return Some(2),
-                ['3', ..] => return Some(3),
-                ['4', ..] => return Some(4),
-                ['5', ..] => return Some(5),
-                ['6', ..] => return Some(6),
-                ['7', ..] => return Some(7),
-                ['8', ..] => return Some(8),
-                ['9', ..] => return Some(9),
-                ['o', 'n', 'e', ..] => return Some(1),
-                ['t', 'w', 'o', ..] => return Some(2),
-                ['t', 'h', 'r', 'e', 'e'] => return Some(3),
-                ['f', 'o', 'u', 'r', ..] => return Some(4),
-                ['f', 'i', 'v', 'e', ..] => return Some(5),
-                ['s', 'i', 'x', ..] => return Some(6),
-                ['s', 'e', 'v', 'e', 'n'] => return Some(7),
-                ['e', 'i', 'g', 'h', 't'] => return Some(8),
-                ['n', 'i', 'n', 'e', ..] => return Some(9),
+                ['1', ..] | ['o', 'n', 'e', ..] => return Some(1),
+                ['2', ..] | ['t', 'w', 'o', ..] => return Some(2),
+                ['3', ..] | ['t', 'h', 'r', 'e', 'e'] => return Some(3),
+                ['4', ..] | ['f', 'o', 'u', 'r', ..] => return Some(4),
+                ['5', ..] | ['f', 'i', 'v', 'e', ..] => return Some(5),
+                ['6', ..] | ['s', 'i', 'x', ..] => return Some(6),
+                ['7', ..] | ['s', 'e', 'v', 'e', 'n'] => return Some(7),
+                ['8', ..] | ['e', 'i', 'g', 'h', 't'] => return Some(8),
+                ['9', ..] | ['n', 'i', 'n', 'e', ..] => return Some(9),
                 _ => continue,
             }
         }
