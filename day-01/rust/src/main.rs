@@ -20,32 +20,25 @@ fn extract_digits(string: &str) -> (u32, u32) {
 }
 
 /// An iterator that yields numbers from a string.
-struct Numbers {
-    chars: Vec<char>,
-    index: usize,
+struct Numbers<'a> {
+    chars: &'a [char],
 }
 
-impl Numbers {
-    fn new(string: &str) -> Self {
-        let chars = string.chars().chain("xxxx".chars()).collect();
-
-        Self { chars, index: 0 }
+impl<'a> Numbers<'a> {
+    fn new(chars: &'a [char]) -> Self {
+        Self { chars }
     }
 }
 
-impl Iterator for Numbers {
+impl Iterator for Numbers<'_> {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            let index = self.index;
-            self.index += 1;
+        while self.chars.len() >= 5 {
+            let window = &self.chars[..5];
+            self.chars = &self.chars[1..];
 
-            if index + 5 > self.chars.len() {
-                return None;
-            }
-
-            match &self.chars[index..index + 5] {
+            match window {
                 ['1', ..] => return Some(1),
                 ['2', ..] => return Some(2),
                 ['3', ..] => return Some(3),
@@ -67,6 +60,8 @@ impl Iterator for Numbers {
                 _ => continue,
             }
         }
+
+        None
     }
 }
 
@@ -83,9 +78,8 @@ fn main() {
 
     let part2: u32 = input
         .lines()
-        .map(Numbers::new)
-        .map(IteratorExt::first_and_last)
-        .map(Option::unwrap)
+        .map(|line| line.chars().chain("xxxx".chars()).collect::<Vec<_>>())
+        .map(|chars| Numbers::new(&chars).first_and_last().unwrap())
         .map(|(a, b)| a * 10 + b)
         .sum();
 
