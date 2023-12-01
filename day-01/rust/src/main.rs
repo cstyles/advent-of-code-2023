@@ -1,46 +1,68 @@
-fn extract_digits(string: &str) -> (u32, u32) {
-    let mut chars = string.chars().filter_map(|c| c.to_digit(10));
-    let a = chars.next().unwrap();
-    let b = chars.last().unwrap_or(a);
+/// Returns the first and last items from an iterator.
+///
+/// Returns the first item twice if there's only one item.
+/// Panics if the iterator is empty.
+fn first_and_last<T: Copy, I: Iterator<Item = T>>(mut iter: I) -> (T, T) {
+    let a = iter.next().unwrap();
+    let b = iter.last().unwrap_or(a);
 
     (a, b)
 }
 
-fn take2(string: &str) -> (u32, u32) {
-    let chars: Vec<char> = string.chars().chain("xxxx".chars()).collect();
+fn extract_digits(string: &str) -> (u32, u32) {
+    let chars = string.chars().filter_map(|c| c.to_digit(10));
+    first_and_last(chars)
+}
 
-    let mut numbers = vec![];
-    for word in chars.windows(5) {
-        let word: [char; 5] = word.try_into().unwrap();
-        let num = match word {
-            ['1', ..] => 1,
-            ['2', ..] => 2,
-            ['3', ..] => 3,
-            ['4', ..] => 4,
-            ['5', ..] => 5,
-            ['6', ..] => 6,
-            ['7', ..] => 7,
-            ['8', ..] => 8,
-            ['9', ..] => 9,
-            ['o', 'n', 'e', ..] => 1,
-            ['t', 'w', 'o', ..] => 2,
-            ['t', 'h', 'r', 'e', 'e', ..] => 3,
-            ['f', 'o', 'u', 'r', ..] => 4,
-            ['f', 'i', 'v', 'e', ..] => 5,
-            ['s', 'i', 'x', ..] => 6,
-            ['s', 'e', 'v', 'e', 'n'] => 7,
-            ['e', 'i', 'g', 'h', 't'] => 8,
-            ['n', 'i', 'n', 'e', ..] => 9,
-            _ => continue,
-        };
+/// An iterator that yields numbers from a string.
+struct Numbers {
+    chars: Vec<char>,
+    index: usize,
+}
 
-        numbers.push(num);
+impl Numbers {
+    fn new(string: &str) -> Self {
+        let chars = string.chars().chain("xxxx".chars()).collect();
+
+        Self { chars, index: 0 }
     }
+}
 
-    (
-        numbers.first().copied().unwrap(),
-        numbers.last().copied().unwrap(),
-    )
+impl Iterator for Numbers {
+    type Item = u32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let index = self.index;
+            self.index += 1;
+
+            if index + 5 > self.chars.len() {
+                return None;
+            }
+
+            match &self.chars[index..index + 5] {
+                ['1', ..] => return Some(1),
+                ['2', ..] => return Some(2),
+                ['3', ..] => return Some(3),
+                ['4', ..] => return Some(4),
+                ['5', ..] => return Some(5),
+                ['6', ..] => return Some(6),
+                ['7', ..] => return Some(7),
+                ['8', ..] => return Some(8),
+                ['9', ..] => return Some(9),
+                ['o', 'n', 'e', ..] => return Some(1),
+                ['t', 'w', 'o', ..] => return Some(2),
+                ['t', 'h', 'r', 'e', 'e'] => return Some(3),
+                ['f', 'o', 'u', 'r', ..] => return Some(4),
+                ['f', 'i', 'v', 'e', ..] => return Some(5),
+                ['s', 'i', 'x', ..] => return Some(6),
+                ['s', 'e', 'v', 'e', 'n'] => return Some(7),
+                ['e', 'i', 'g', 'h', 't'] => return Some(8),
+                ['n', 'i', 'n', 'e', ..] => return Some(9),
+                _ => continue,
+            }
+        }
+    }
 }
 
 fn main() {
@@ -54,6 +76,12 @@ fn main() {
 
     println!("part1 = {part1}");
 
-    let part2: u32 = input.lines().map(take2).map(|(a, b)| a * 10 + b).sum();
+    let part2: u32 = input
+        .lines()
+        .map(Numbers::new)
+        .map(first_and_last)
+        .map(|(a, b)| a * 10 + b)
+        .sum();
+
     println!("part2 = {part2}");
 }
