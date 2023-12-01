@@ -1,17 +1,22 @@
-/// Returns the first and last items from an iterator.
-///
-/// Returns the first item twice if there's only one item.
-/// Panics if the iterator is empty.
-fn first_and_last<T: Copy, I: Iterator<Item = T>>(mut iter: I) -> (T, T) {
-    let a = iter.next().unwrap();
-    let b = iter.last().unwrap_or(a);
+trait IteratorExt: Iterator {
+    /// Returns the first and last items from an iterator.
+    ///
+    /// Returns the first item twice if there's only one item.
+    fn first_and_last(self) -> Option<(Self::Item, Self::Item)>;
+}
 
-    (a, b)
+impl<T: Copy, I: Iterator<Item = T>> IteratorExt for I {
+    fn first_and_last(mut self) -> Option<(Self::Item, Self::Item)> {
+        self.next().map(|a| (a, self.last().unwrap_or(a)))
+    }
 }
 
 fn extract_digits(string: &str) -> (u32, u32) {
-    let chars = string.chars().filter_map(|c| c.to_digit(10));
-    first_and_last(chars)
+    string
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .first_and_last()
+        .unwrap()
 }
 
 /// An iterator that yields numbers from a string.
@@ -79,7 +84,8 @@ fn main() {
     let part2: u32 = input
         .lines()
         .map(Numbers::new)
-        .map(first_and_last)
+        .map(IteratorExt::first_and_last)
+        .map(Option::unwrap)
         .map(|(a, b)| a * 10 + b)
         .sum();
 
