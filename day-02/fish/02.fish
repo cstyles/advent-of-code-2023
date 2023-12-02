@@ -1,6 +1,10 @@
 #!/usr/bin/env fish
 
-set input (cat ../input.txt)
+if test (count $argv) -gt 0
+  set input (cat $argv[1]) # Read from file specified by CLI arg
+else
+  set input (cat ../input.txt) # Default to actual input
+end
 
 function part1
   function is_round_possible -a round
