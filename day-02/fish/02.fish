@@ -52,4 +52,49 @@ function part1
   echo $total
 end
 
+function part2
+  function game_power -a line
+    set line (string trim --left --chars='Game ' $line)
+    set line (string split ': ' $line)[2]
+
+    set max_red 0
+    set max_green 0
+    set max_blue 0
+
+    for round in (string split '; ' $line)
+      for pull in (string split ', ' $round)
+        set temp (string split ' ' $pull)
+        set count $temp[1]
+        set color $temp[2]
+
+        switch $color
+          case 'red'
+            if test $count -gt $max_red
+              set max_red $count
+            end
+          case 'green'
+            if test $count -gt $max_green
+              set max_green $count
+            end
+          case 'blue'
+            if test $count -gt $max_blue
+              set max_blue $count
+            end
+        end
+      end
+    end
+
+    math "$max_red * $max_green * $max_blue"
+  end
+
+  set total 0
+  for line in $argv
+    set result (game_power $line)
+    set total (math "$total + $result")
+  end
+
+  echo $total
+end
+
 part1 $input
+part2 $input
