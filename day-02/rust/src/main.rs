@@ -29,6 +29,10 @@ impl Round {
     fn possible(&self) -> bool {
         self.red <= 12 && self.green <= 13 && self.blue <= 14
     }
+
+    fn power(self) -> u32 {
+        self.red * self.green * self.blue
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +55,14 @@ impl Game {
     fn possible(&self) -> bool {
         self.rounds.iter().all(|round| round.possible())
     }
+
+    fn fewest_cubes_possible(self) -> Round {
+        Round {
+            red: self.rounds.iter().map(|r| r.red).max().unwrap(),
+            green: self.rounds.iter().map(|r| r.green).max().unwrap(),
+            blue: self.rounds.iter().map(|r| r.blue).max().unwrap(),
+        }
+    }
 }
 
 fn main() {
@@ -65,4 +77,13 @@ fn main() {
         .sum();
 
     println!("part1 = {part1}");
+
+    let part2: u32 = input
+        .lines()
+        .map(Game::parse)
+        .map(Game::fewest_cubes_possible)
+        .map(Round::power)
+        .sum();
+
+    println!("part2 = {part2}");
 }
