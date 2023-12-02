@@ -27,6 +27,10 @@ let ( % ) f g x = f (g x)
 let extract_digits string =
   explode string |> List.filter_map parse_digit |> first_and_last |> Option.get
 
+(* Same as above but using function composition and tacit programming. *)
+let extract_digits' =
+  Option.get % first_and_last % List.filter_map parse_digit % explode
+
 (* Converts a pair of numbers to a calibration value. *)
 let calibration_value (first, last) = (first * 10) + last
 
