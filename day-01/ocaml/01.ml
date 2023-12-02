@@ -4,7 +4,7 @@ let lines = String.split_on_char '\n' input
 (* Returns the last item of a list. *)
 let rec last = function
   | [] -> None
-  | x :: [] -> Some x
+  | [x] -> Some x
   | _ :: rest -> last rest
 
 (* Returns the first and last items of a list. *)
