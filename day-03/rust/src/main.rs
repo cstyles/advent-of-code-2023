@@ -1,7 +1,7 @@
 mod point;
 use point::Point;
 
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::iter::successors;
 
 #[derive(Debug, Copy, Clone)]
@@ -71,7 +71,7 @@ fn lookup(grid: &[Vec<char>], Point { y, x }: Point) -> char {
 /// Tries to parse a number at (or near) a coordinate
 fn find_number(grid: &[Vec<char>], mut point: Point) -> Option<Number> {
     let digit = lookup(grid, point).to_digit(10)?;
-    let mut digits = vec![digit];
+    let mut digits = VecDeque::from([digit]);
 
     // Try parsing to the right
     let digits_to_the_right = successors(point.right::<SIZE>(), Point::right::<SIZE>)
@@ -82,7 +82,7 @@ fn find_number(grid: &[Vec<char>], mut point: Point) -> Option<Number> {
     for digit_to_the_left in successors(point.left::<SIZE>(), Point::left::<SIZE>)
         .map_while(|point| lookup(grid, point).to_digit(10))
     {
-        digits.insert(0, digit_to_the_left);
+        digits.push_front(digit_to_the_left);
         point = point.left::<SIZE>().unwrap();
     }
 
