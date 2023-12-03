@@ -63,23 +63,13 @@ fn main() {
 }
 
 /// Panics if out of bounds
-fn lookup_unchecked(grid: &[Vec<char>], y: usize, x: usize) -> char {
+fn lookup(grid: &[Vec<char>], Point { y, x }: Point) -> char {
     grid[y][x]
-}
-
-fn lookup(grid: &[Vec<char>], y: usize, x: usize) -> Option<char> {
-    grid.get(y).and_then(|row| row.get(x)).copied()
-}
-
-fn lookup_point(grid: &[Vec<char>], Point { y, x }: Point) -> Option<char> {
-    lookup(grid, y, x)
 }
 
 /// Tries to parse a number at (or near) a coordinate
 fn find_number(grid: &[Vec<char>], point: Point) -> Option<Number> {
-    let digit = lookup_point(grid, point)?;
-    let digit = digit.to_digit(10)?;
-
+    let digit = lookup(grid, point).to_digit(10)?;
     let mut digits = vec![digit];
 
     // Try parsing to the right
@@ -87,8 +77,7 @@ fn find_number(grid: &[Vec<char>], point: Point) -> Option<Number> {
     let mut going_right = point;
     while let Some(digit) = going_right
         .right::<SIZE>()
-        .and_then(|p| lookup_point(grid, p))
-        .and_then(|c| c.to_digit(10))
+        .and_then(|p| lookup(grid, p).to_digit(10))
     {
         digits.push(digit);
         going_right = going_right.right::<SIZE>().unwrap();
@@ -98,8 +87,7 @@ fn find_number(grid: &[Vec<char>], point: Point) -> Option<Number> {
     let mut going_left = point;
     while let Some(digit) = going_left
         .left::<SIZE>()
-        .and_then(|p| lookup_point(grid, p))
-        .and_then(|c| c.to_digit(10))
+        .and_then(|p| lookup(grid, p).to_digit(10))
     {
         digits.insert(0, digit);
         going_left = going_left.left::<SIZE>().unwrap(); // TODO
