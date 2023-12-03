@@ -4,43 +4,17 @@ use point::Point;
 use std::collections::HashSet;
 
 #[derive(Debug, Copy, Clone)]
-enum SymbolType {
-    Slash,
-    Star,
-    At,
-    Dollar,
-    Pound,
-    Equal,
-    Plus,
-    Percent,
-    And,
-    Dash,
-}
-
-#[derive(Debug, Copy, Clone)]
 struct Symbol {
-    stype: SymbolType,
+    character: char,
     point: Point,
 }
 
 impl Symbol {
-    fn new(c: char, point: Point) -> Option<Self> {
-        let stype = match c {
-            '/' => SymbolType::Slash,
-            '*' => SymbolType::Star,
-            '@' => SymbolType::At,
-            '$' => SymbolType::Dollar,
-            '#' => SymbolType::Pound,
-            '=' => SymbolType::Equal,
-            '+' => SymbolType::Plus,
-            '%' => SymbolType::Percent,
-            '&' => SymbolType::And,
-            '-' => SymbolType::Dash,
-            '.' | '0'..='9' => return None,
-            _ => unreachable!("bad input: {c}"),
-        };
-
-        Some(Self { stype, point })
+    fn new(character: char, point: Point) -> Option<Self> {
+        match character {
+            '.' | '0'..='9' => None,
+            _ => Some(Self { character, point }),
+        }
     }
 }
 
@@ -81,7 +55,7 @@ fn main() {
 
     let part2: u32 = symbols
         .into_iter()
-        .filter(|s| matches!(s.stype, SymbolType::Star))
+        .filter(|s| s.character == '*')
         .filter_map(|s| gear_ratio(&grid, s.point))
         .sum();
 
