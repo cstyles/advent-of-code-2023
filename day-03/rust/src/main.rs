@@ -2,7 +2,7 @@ mod point;
 use point::Point;
 
 use std::collections::{HashSet, VecDeque};
-use std::iter::successors;
+use std::iter::{repeat, successors};
 
 #[derive(Debug, Copy, Clone)]
 struct Symbol {
@@ -37,13 +37,12 @@ fn main() {
         .map(|line| line.chars().collect::<Vec<char>>())
         .collect();
 
-    let mut symbols = vec![];
-    for (y, line) in INPUT.lines().enumerate() {
-        for (x, c) in line.chars().enumerate() {
-            let point = Point { y, x };
-            symbols.extend(Symbol::new(c, point));
-        }
-    }
+    let symbols: Vec<Symbol> = INPUT
+        .lines()
+        .enumerate()
+        .flat_map(|(y, line)| repeat(y).zip(line.chars().enumerate()))
+        .filter_map(|(y, (x, c))| Symbol::new(c, Point { y, x }))
+        .collect();
 
     let numbers: HashSet<Number> = symbols
         .iter()
