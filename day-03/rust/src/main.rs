@@ -78,6 +78,14 @@ fn main() {
 
     let part1: u32 = numbers.into_iter().map(|n| n.value).sum();
     println!("part1 = {part1}");
+
+    let part2: u32 = symbols
+        .into_iter()
+        .filter(|s| matches!(s.stype, SymbolType::Star))
+        .filter_map(|s| gear_ratio(&grid, s.point))
+        .sum();
+
+    println!("part2 = {part2}");
 }
 
 /// Panics if out of bounds
@@ -131,4 +139,17 @@ fn find_number(grid: &[Vec<char>], point: Point) -> Option<Number> {
 
 fn digits_to_number(digits: Vec<u32>) -> u32 {
     digits.into_iter().fold(0, |acc, elm| acc * 10 + elm)
+}
+
+fn gear_ratio(grid: &[Vec<char>], point: Point) -> Option<u32> {
+    let neighbors: HashSet<Number> = point
+        .neighbors::<SIZE>()
+        .filter_map(|neighbor| find_number(grid, neighbor))
+        .collect();
+
+    if neighbors.len() == 2 {
+        Some(neighbors.into_iter().map(|num| num.value).product())
+    } else {
+        None
+    }
 }
