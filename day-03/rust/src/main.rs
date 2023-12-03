@@ -2,6 +2,7 @@ mod point;
 use point::Point;
 
 use std::collections::HashSet;
+use std::iter::successors;
 
 #[derive(Debug, Copy, Clone)]
 struct Symbol {
@@ -68,38 +69,28 @@ fn lookup(grid: &[Vec<char>], Point { y, x }: Point) -> char {
 }
 
 /// Tries to parse a number at (or near) a coordinate
-fn find_number(grid: &[Vec<char>], point: Point) -> Option<Number> {
+fn find_number(grid: &[Vec<char>], mut point: Point) -> Option<Number> {
     let digit = lookup(grid, point).to_digit(10)?;
     let mut digits = vec![digit];
 
     // Try parsing to the right
-    // TODO: iterator-ify!
-    let mut going_right = point;
-    while let Some(digit) = going_right
-        .right::<SIZE>()
-        .and_then(|p| lookup(grid, p).to_digit(10))
-    {
-        digits.push(digit);
-        going_right = going_right.right::<SIZE>().unwrap();
-    }
+    let digits_to_the_right = successors(point.right::<SIZE>(), Point::right::<SIZE>)
+        .map_while(|point| lookup(grid, point).to_digit(10));
+    digits.extend(digits_to_the_right);
 
     // Try parsing to the left
-    let mut going_left = point;
-    while let Some(digit) = going_left
-        .left::<SIZE>()
-        .and_then(|p| lookup(grid, p).to_digit(10))
+    for digit_to_the_left in successors(point.left::<SIZE>(), Point::left::<SIZE>)
+        .map_while(|point| lookup(grid, point).to_digit(10))
     {
-        digits.insert(0, digit);
-        going_left = going_left.left::<SIZE>().unwrap(); // TODO
+        digits.insert(0, digit_to_the_left);
+        point = point.left::<SIZE>().unwrap();
     }
 
-    Some(Number {
-        point: going_left,
-        value: digits_to_number(digits),
-    })
+    let value = digits_to_number(digits);
+    Some(Number { point, value })
 }
 
-fn digits_to_number(digits: Vec<u32>) -> u32 {
+fn digits_to_number(digits: impl IntoIterator<Item = u32>) -> u32 {
     digits.into_iter().fold(0, |acc, elm| acc * 10 + elm)
 }
 

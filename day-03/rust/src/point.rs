@@ -38,12 +38,12 @@ impl Point {
             .map(|(y, x)| Self { y, x })
     }
 
-    pub fn left<const N: usize>(self) -> Option<Self> {
-        self.x.checked_sub(1).map(|x| Self { x, ..self })
+    pub fn left<const N: usize>(&self) -> Option<Self> {
+        self.x.checked_sub(1).map(|x| Self { x, ..*self })
     }
 
-    pub fn right<const N: usize>(self) -> Option<Self> {
-        self.x.bounded_add::<N>(1).map(|x| Self { x, ..self })
+    pub fn right<const N: usize>(&self) -> Option<Self> {
+        self.x.bounded_add::<N>(1).map(|x| Self { x, ..*self })
     }
 
     fn down_left<const N: usize>(self) -> Option<Self> {
