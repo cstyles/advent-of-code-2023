@@ -41,6 +41,13 @@ def main
 
   part1 = part_numbers.map { |num| num.value }.sum
   puts "part1 = #{part1}"
+
+  part2 = glyphs
+    .select { |glyph| glyph.character == '*' }
+    .compact_map { |glyph| gear_ratio grid, glyph.point }
+    .sum
+
+  puts "part2 = #{part2}"
 end
 
 def lookup(grid, point)
@@ -77,6 +84,19 @@ end
 
 def parse_number(digits)
   digits.reduce(0) { |acc, elm| acc * 10 + elm }
+end
+
+def gear_ratio(grid, point)
+  neighbors = point
+    .neighbors
+    .compact_map { |neighbor| find_number grid, neighbor }
+    .to_set
+
+  if neighbors.size == 2
+    neighbors.map(&.value).product
+  else
+    nil
+  end
 end
 
 main
