@@ -59,12 +59,9 @@ def find_number(grid, point)
 
   # Try parsing to the right
   digits_to_the_right = Unfold.new(point, &.right)
-    .map { |point| lookup(grid, point).to_digit }
-    .take_while { |digit| !digit.nil? }
-    .map { |digit| digit.not_nil! } # no map_wnile?
+    .map_while { |point| lookup(grid, point).to_digit }
 
   digits.concat digits_to_the_right
-  digits
 
   # Try parsing to the left
   digits_to_the_left = Unfold.new(point, &.left)
