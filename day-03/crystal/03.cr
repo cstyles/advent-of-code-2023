@@ -25,14 +25,12 @@ def main
   input = File.read "../input.txt"
   grid = input.lines.map { |line| line.chars }
 
-  glyphs = [] of Glyph
-  input.lines.each_with_index do |line, y|
-    line.chars.each_with_index do |c, x|
-      point = Point.new y, x
-      glyph = Glyph.try_new c, point
-      glyphs << glyph unless glyph.nil?
-    end
-  end
+  glyphs = input
+    .lines
+    .each_with_index
+    .flat_map { |line, y| [y].cycle.zip line.chars.each_with_index }
+    .compact_map { |(y, (c, x))| Glyph.try_new(c, Point.new(y, x)) }
+    .to_a
 
   part_numbers = glyphs
     .flat_map { |glyph| glyph.point.neighbors }
