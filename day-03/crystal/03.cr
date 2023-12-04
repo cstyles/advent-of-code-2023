@@ -70,9 +70,7 @@ def find_number(grid, point)
 
   # Try parsing to the left
   digits_to_the_left = Unfold.new(point, &.left)
-    .map { |point| lookup(grid, point).to_digit }
-    .take_while { |digit| !digit.nil? }
-    .map { |digit| digit.not_nil! } # TODO: no map_wnile? :(
+    .map_while { |point| lookup(grid, point).to_digit }
     .each do |digit|
       digits.unshift digit
       point = point.left.not_nil!
@@ -123,5 +121,32 @@ struct Char
     to_i
   rescue
     nil
+  end
+end
+
+module Iterator(T)
+  def map_while(&func : T -> U | Nil) forall U
+    MapWhile(typeof(self), T, U).new(self, func)
+  end
+end
+
+class MapWhile(I, T, U)
+  include Iterator(U)
+  include IteratorWrapper
+
+  def initialize(@iterator : I, @func : T -> U | Nil)
+    @done = false
+  end
+
+  def next
+    return stop if @done
+    value = wrapped_next.try &@func
+
+    if value.nil?
+      @done = true
+      stop
+    else
+      value
+    end
   end
 end
