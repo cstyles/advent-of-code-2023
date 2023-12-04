@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 #[derive(Debug)]
 struct Card {
     id: u32,
@@ -51,18 +49,18 @@ fn main() {
     let part1: u32 = cards.iter().map(Card::value).sum();
     println!("part1 = {part1}");
 
-    let mut counts: HashMap<u32, u32> = cards.iter().map(|card| (card.id, 1)).collect();
+    let mut counts: Vec<u32> = vec![1; cards.len()];
 
     for card in cards {
         let winning_count = card.winning_count();
-        let count = counts.get(&card.id).copied().unwrap();
+        let count = counts[card.id as usize - 1];
 
         for id in 1..=winning_count {
-            let id = id + card.id;
-            *counts.get_mut(&id).unwrap() += count;
+            let id = id + card.id - 1;
+            counts[id as usize] += count;
         }
     }
 
-    let part2: u32 = counts.into_values().sum();
+    let part2: u32 = counts.into_iter().sum();
     println!("part2 = {part2}");
 }
