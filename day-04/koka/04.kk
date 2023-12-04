@@ -32,6 +32,21 @@ fun main()
 
   cards.map(card-value).sum.println // part1
 
+  // boooo imperative >:(
+  var counts := vector-init(cards.length, const(1))
+  var i := 0
+  cards.foreach fn(card)
+    val winning-count = card.winning-count
+    val count = counts[card.number - 1]
+
+    i := 0
+    while { i < winning-count } fn()
+      val count-to-update = counts[card.number + i]
+      counts[card.number + i] := count-to-update + count
+      i := i + 1
+
+  counts.list.sum.println // part2
+
 fun split-once(s : string, sep : string) : maybe<(string, string)>
   match s.split(sep, 2)
     Cons(a, tail) -> match tail
