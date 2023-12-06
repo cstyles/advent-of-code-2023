@@ -1,0 +1,29 @@
+R = "record to beat" = 244,104,712,281,040
+r = "round length" = 41,667,266
+t = "time held"
+d = "distance traveled"
+
+# The formula for distance traveled in terms of round length and time held:
+
+d = t * (r - t)
+d = -t^2 + rt
+0 = -t^2 + rt - d
+0 = t^2 - rt + d
+
+# Apply the quadratic formula:
+
+a = 1, b = -r, c = d
+
+x = r ± √((-r)*2 - 4d)
+    ——————————————————
+            2
+
+# Set d = R:
+
+x = 47,667,266 ± 27,563,421.54
+    ——————————————————————————
+                2
+
+x = 37,615,343.77 and 10,051,922.23
+
+Number of winning solutions = 37,615,343 - 10,051,922 = 27,563,421
