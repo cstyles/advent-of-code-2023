@@ -52,6 +52,67 @@ let mapping_lookup number { source_start; dest_start; length } =
 let mapping_source { source_start; dest_start; length } =
   { start = source_start; end_ = source_start + length }
 
+let mapping_translate { start = range_start; end_ = range_end }
+    {
+      source_start = mapping_source_start;
+      dest_start = mapping_dest_start;
+      length = _;
+    } =
+  {
+    start = range_start + mapping_dest_start - mapping_source_start;
+    end_ = range_end + mapping_dest_start - mapping_source_start;
+  }
+
+(* ==== overlap_result type ==== *)
+
+type split = { overlap : range; left : range; right : range }
+type partial = { overlap : range; leftovers : range }
+
+type overlap_result =
+  | None
+  | Full of range
+  | Split of split
+  | Partial of partial
+
+let smart_overlap a b =
+  let { start = a_start; end_ = a_end } = a in
+  let { start = b_start; end_ = b_end } = b in
+  match
+    ( compare a_start b_start,
+      compare a_start b_end,
+      compare a_end b_start,
+      compare a_end b_end )
+  with
+  | _, _, -1, _ | _, _, 0, _ -> None
+  | _, 0, _, _ | _, 1, _, _ -> None
+  | 0, _, _, 0 | 1, _, _, 0 | 0, _, _, -1 | 1, _, _, -1 -> Full a
+  | -1, _, _, 1 ->
+      Split
+        {
+          overlap = b;
+          left = { start = a_start; end_ = b_start };
+          right = { start = b_end; end_ = a_end };
+        }
+  | -1, _, 1, _ ->
+      Partial
+        {
+          overlap = { start = b_start; end_ = a_end };
+          leftovers = { start = a_start; end_ = b_start };
+        }
+  | 0, _, _, _ ->
+      Partial
+        {
+          overlap = { start = a_start; end_ = b_end };
+          leftovers = { start = b_end; end_ = a_end };
+        }
+  | _, -1, _, _ ->
+      Partial
+        {
+          overlap = { start = a_start; end_ = b_end };
+          leftovers = { start = b_end; end_ = a_end };
+        }
+  | _ -> failwith "unreachable"
+
 (* ==== Parsing ==== *)
 
 let parse_seeds line =
@@ -134,4 +195,44 @@ let trace_through seed =
   location
 ;;
 
+print_string "part1: ";
 print_int_endline @@ min (List.map trace_through seeds)
+
+let round coming_from mappings =
+  let final = ref [] in
+  let queue = Queue.create () in
+  List.iter (fun x -> Queue.push x queue) coming_from;
+  while Queue.length queue > 0 do
+    let seed_range = Queue.pop queue in
+    let mapped =
+      List.map
+        (fun mapping ->
+          (mapping, smart_overlap seed_range (mapping_source mapping)))
+        mappings
+    in
+    let found = List.find_opt (fun (_, result) -> result != None) mapped in
+    match found with
+    | None -> final := List.cons seed_range !final
+    | Some (mapping, Full range) ->
+        final := List.cons (mapping_translate range mapping) !final
+    | Some (mapping, Partial { overlap; leftovers }) ->
+        final := List.cons (mapping_translate overlap mapping) !final;
+        Queue.push leftovers queue
+    | Some (mapping, Split { overlap; left; right }) ->
+        final := List.cons (mapping_translate overlap mapping) !final;
+        Queue.push left queue;
+        Queue.push right queue
+    | Some (mapping, None) -> failwith "unreachable"
+  done;
+  !final
+
+let soil = round seed_ranges seed_to_soil
+let fertilizer = round soil soil_to_fertilizer
+let water = round fertilizer fertilizer_to_water
+let light = round water water_to_light
+let temperature = round light light_to_temperature
+let humidity = round temperature temperature_to_humidity
+let location = round humidity humidity_to_location;;
+
+print_string "part2: ";
+print_int_endline @@ min @@ List.map (fun { start; end_ } -> start) location
