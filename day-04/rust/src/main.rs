@@ -49,18 +49,23 @@ fn main() {
     let part1: u32 = cards.iter().map(Card::value).sum();
     println!("part1 = {part1}");
 
-    let mut counts: Vec<u32> = vec![1; cards.len()];
-
-    for card in cards {
+    let counts = vec![1; cards.len()];
+    let counts = cards.into_iter().fold(counts, |counts, card| {
         let winning_count = card.winning_count();
         let count = counts[card.id as usize - 1];
 
-        for id in 1..=winning_count {
-            let id = id + card.id - 1;
-            counts[id as usize] += count;
-        }
-    }
+        (1..=winning_count).fold(counts, |counts, id| {
+            let id = (id + card.id - 1) as usize;
+            let count = count + counts[id];
+            replace(counts, id, count)
+        })
+    });
 
     let part2: u32 = counts.into_iter().sum();
     println!("part2 = {part2}");
+}
+
+fn replace<T>(mut v: Vec<T>, position: usize, item: T) -> Vec<T> {
+    v[position] = item;
+    v
 }
