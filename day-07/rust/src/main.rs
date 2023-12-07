@@ -11,12 +11,15 @@ enum Type {
     HighCard,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 struct Card(u32);
+
+const JOKER: Card = Card(1);
 
 impl Card {
     fn parse(c: char) -> Self {
         Card(match c {
+            'J' => 1,
             '2' => 2,
             '3' => 3,
             '4' => 4,
@@ -26,7 +29,6 @@ impl Card {
             '8' => 8,
             '9' => 9,
             'T' => 10,
-            'J' => 11,
             'Q' => 12,
             'K' => 13,
             'A' => 14,
@@ -35,9 +37,40 @@ impl Card {
     }
 }
 
+impl std::fmt::Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self.0 {
+                1 => 'J',
+                2 => '2',
+                3 => '3',
+                4 => '4',
+                5 => '5',
+                6 => '6',
+                7 => '7',
+                8 => '8',
+                9 => '9',
+                10 => 'T',
+                12 => 'Q',
+                13 => 'K',
+                14 => 'A',
+                _ => unreachable!(),
+            }
+        )
+    }
+}
+
+impl std::fmt::Debug for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self, f)
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 struct Hand {
-    hand: [Card; 5],
+    cards: [Card; 5],
     bid: u32,
 }
 
@@ -55,17 +88,17 @@ impl Hand {
             Card::parse(chars.next().unwrap()),
         ];
 
-        Self { hand, bid }
+        Self { cards: hand, bid }
     }
 
     fn type_(&self) -> Type {
-        let map =
-            self.hand
-                .into_iter()
-                .fold(HashMap::<Card, u32>::with_capacity(13), |mut map, card| {
-                    map.entry(card).and_modify(|count| *count += 1).or_insert(1);
-                    map
-                });
+        let map = self.best().cards.into_iter().fold(
+            HashMap::<Card, u32>::with_capacity(13),
+            |mut map, card| {
+                map.entry(card).and_modify(|count| *count += 1).or_insert(1);
+                map
+            },
+        );
 
         if map.values().any(|count| *count == 5) {
             Type::FiveOfAKind
@@ -88,9 +121,9 @@ impl Hand {
 
     fn break_tie(&self, other: &Self) -> Ordering {
         match self
-            .hand
+            .cards
             .into_iter()
-            .zip(other.hand)
+            .zip(other.cards)
             .try_fold((), |_, (left, right)| match left.0.cmp(&right.0) {
                 Ordering::Equal => ControlFlow::Continue(()),
                 Ordering::Greater => ControlFlow::Break(TieBreak::Left),
@@ -104,16 +137,48 @@ impl Hand {
 
     #[allow(dead_code)]
     fn break_tie2(&self, other: &Self) -> Ordering {
-        self.hand[0].0.cmp(&other.hand[0].0).then(
-            self.hand[1].0.cmp(&other.hand[1].0).then(
-                self.hand[2].0.cmp(&other.hand[2].0).then(
-                    self.hand[3]
+        self.cards[0].0.cmp(&other.cards[0].0).then(
+            self.cards[1].0.cmp(&other.cards[1].0).then(
+                self.cards[2].0.cmp(&other.cards[2].0).then(
+                    self.cards[3]
                         .0
-                        .cmp(&other.hand[3].0)
-                        .then(self.hand[4].0.cmp(&other.hand[4].0)),
+                        .cmp(&other.cards[3].0)
+                        .then(self.cards[4].0.cmp(&other.cards[4].0)),
                 ),
             ),
         )
+    }
+
+    /// Returns the best possible version of a hand, made by substituting
+    /// Jokers for other cards.
+    fn best(self) -> Self {
+        match self.cards.into_iter().position(|card| card == JOKER) {
+            None => self,
+            Some(position) => [
+                Card(2),
+                Card(3),
+                Card(4),
+                Card(5),
+                Card(6),
+                Card(7),
+                Card(8),
+                Card(9),
+                Card(10),
+                Card(12),
+                Card(13),
+                Card(14),
+            ]
+            .into_iter()
+            .map(|card| self.replace(position, card))
+            .map(Hand::best)
+            .max()
+            .unwrap(),
+        }
+    }
+
+    fn replace(mut self, position: usize, with: Card) -> Self {
+        self.cards[position] = with;
+        self
     }
 }
 
