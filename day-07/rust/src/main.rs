@@ -12,14 +12,11 @@ enum Type {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
-struct Card(u32);
+struct Card<const PART_TWO: bool>(u32);
 
-const JOKER: Card = Card(1);
-
-impl Card {
+impl<const PART_TWO: bool> Card<PART_TWO> {
     fn parse(c: char) -> Self {
         Card(match c {
-            'J' => 1,
             '2' => 2,
             '3' => 3,
             '4' => 4,
@@ -29,6 +26,13 @@ impl Card {
             '8' => 8,
             '9' => 9,
             'T' => 10,
+            'J' => {
+                if PART_TWO {
+                    1
+                } else {
+                    11
+                }
+            }
             'Q' => 12,
             'K' => 13,
             'A' => 14,
@@ -37,63 +41,20 @@ impl Card {
     }
 }
 
-impl std::fmt::Display for Card {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self.0 {
-                1 => 'J',
-                2 => '2',
-                3 => '3',
-                4 => '4',
-                5 => '5',
-                6 => '6',
-                7 => '7',
-                8 => '8',
-                9 => '9',
-                10 => 'T',
-                12 => 'Q',
-                13 => 'K',
-                14 => 'A',
-                _ => unreachable!(),
-            }
-        )
-    }
-}
-
-impl std::fmt::Debug for Card {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self, f)
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-struct Hand {
-    cards: [Card; 5],
+#[derive(Copy, Clone, PartialEq, Eq)]
+struct Hand<const PART_TWO: bool> {
+    cards: Cards<false, PART_TWO>,
+    best_cards: Cards<true, PART_TWO>,
     bid: u32,
 }
 
-impl Hand {
-    fn parse(string: &str) -> Self {
-        let (hand, bid) = string.split_once(' ').unwrap();
-        let bid = bid.parse().unwrap();
-        let mut chars = hand.chars();
+#[derive(Copy, Clone, PartialEq, Eq)]
+struct Cards<const BEST: bool, const PART_TWO: bool>([Card<PART_TWO>; 5]);
 
-        let hand = [
-            Card::parse(chars.next().unwrap()),
-            Card::parse(chars.next().unwrap()),
-            Card::parse(chars.next().unwrap()),
-            Card::parse(chars.next().unwrap()),
-            Card::parse(chars.next().unwrap()),
-        ];
-
-        Self { cards: hand, bid }
-    }
-
+impl<const BEST: bool, const PART_TWO: bool> Cards<BEST, PART_TWO> {
     fn type_(&self) -> Type {
-        let map = self.best().cards.into_iter().fold(
-            HashMap::<Card, u32>::with_capacity(13),
+        let map = self.0.into_iter().fold(
+            HashMap::<Card<PART_TWO>, u32>::with_capacity(13),
             |mut map, card| {
                 map.entry(card).and_modify(|count| *count += 1).or_insert(1);
                 map
@@ -119,11 +80,16 @@ impl Hand {
         }
     }
 
+    fn replace(mut self, position: usize, with: Card<PART_TWO>) -> Self {
+        self.0[position] = with;
+        self
+    }
+
     fn break_tie(&self, other: &Self) -> Ordering {
         match self
-            .cards
+            .0
             .into_iter()
-            .zip(other.cards)
+            .zip(other.0)
             .try_fold((), |_, (left, right)| match left.0.cmp(&right.0) {
                 Ordering::Equal => ControlFlow::Continue(()),
                 Ordering::Greater => ControlFlow::Break(TieBreak::Left),
@@ -134,51 +100,41 @@ impl Hand {
             ControlFlow::Break(TieBreak::Right) => Ordering::Less,
         }
     }
+}
 
-    #[allow(dead_code)]
-    fn break_tie2(&self, other: &Self) -> Ordering {
-        self.cards[0].0.cmp(&other.cards[0].0).then(
-            self.cards[1].0.cmp(&other.cards[1].0).then(
-                self.cards[2].0.cmp(&other.cards[2].0).then(
-                    self.cards[3]
-                        .0
-                        .cmp(&other.cards[3].0)
-                        .then(self.cards[4].0.cmp(&other.cards[4].0)),
-                ),
-            ),
-        )
-    }
-
+impl<const BEST: bool, const PART_TWO: bool> Cards<BEST, PART_TWO> {
     /// Returns the best possible version of a hand, made by substituting
     /// Jokers for other cards.
-    fn best(self) -> Self {
-        match self.cards.into_iter().position(|card| card == JOKER) {
-            None => self,
-            Some(position) => [
-                Card(2),
-                Card(3),
-                Card(4),
-                Card(5),
-                Card(6),
-                Card(7),
-                Card(8),
-                Card(9),
-                Card(10),
-                Card(12),
-                Card(13),
-                Card(14),
-            ]
-            .into_iter()
-            .map(|card| self.replace(position, card))
-            .map(Hand::best)
-            .max()
-            .unwrap(),
+    fn best(self) -> Cards<true, PART_TWO> {
+        match BEST {
+            true => self.assume_best(),
+            false => match self.0.into_iter().position(|card| card == Card(1)) {
+                None => self.assume_best(),
+                Some(position) => [
+                    Card(2),
+                    Card(3),
+                    Card(4),
+                    Card(5),
+                    Card(6),
+                    Card(7),
+                    Card(8),
+                    Card(9),
+                    Card(10),
+                    Card(12),
+                    Card(13),
+                    Card(14),
+                ]
+                .into_iter()
+                .map(|card| self.replace(position, card))
+                .map(Cards::best)
+                .max()
+                .unwrap(),
+            },
         }
     }
 
-    fn replace(mut self, position: usize, with: Card) -> Self {
-        self.cards[position] = with;
-        self
+    fn assume_best(self) -> Cards<true, PART_TWO> {
+        Cards(self.0)
     }
 }
 
@@ -187,7 +143,7 @@ enum TieBreak {
     Right,
 }
 
-impl Ord for Hand {
+impl<const BEST: bool, const PART_TWO: bool> Ord for Cards<BEST, PART_TWO> {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self.type_(), other.type_()) {
             (Type::FiveOfAKind, Type::FiveOfAKind)
@@ -196,7 +152,7 @@ impl Ord for Hand {
             | (Type::ThreeOfAKind, Type::ThreeOfAKind)
             | (Type::TwoPair, Type::TwoPair)
             | (Type::OnePair, Type::OnePair)
-            | (Type::HighCard, Type::HighCard) => self.break_tie(other),
+            | (Type::HighCard, Type::HighCard) => Ordering::Equal,
             (Type::FiveOfAKind, _) => Ordering::Greater,
             (Type::FourOfAKind, Type::FiveOfAKind) => Ordering::Less,
             (Type::FourOfAKind, _) => Ordering::Greater,
@@ -215,24 +171,69 @@ impl Ord for Hand {
     }
 }
 
-impl PartialOrd for Hand {
+impl<const BEST: bool, const PART_TWO: bool> PartialOrd for Cards<BEST, PART_TWO> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<const PART_TWO: bool> Hand<PART_TWO> {
+    fn parse(string: &str) -> Self {
+        let (hand, bid) = string.split_once(' ').unwrap();
+        let bid = bid.parse().unwrap();
+        let mut chars = hand.chars();
+
+        let cards = Cards::<false, PART_TWO>([
+            Card::parse(chars.next().unwrap()),
+            Card::parse(chars.next().unwrap()),
+            Card::parse(chars.next().unwrap()),
+            Card::parse(chars.next().unwrap()),
+            Card::parse(chars.next().unwrap()),
+        ]);
+
+        let best_cards = cards.best();
+
+        Self {
+            cards,
+            best_cards,
+            bid,
+        }
+    }
+}
+
+impl<const PART_TWO: bool> Ord for Hand<PART_TWO> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match PART_TWO {
+            false => self.cards.cmp(&other.cards),
+            true => self.best_cards.cmp(&other.best_cards),
+        }
+        .then_with(|| self.cards.break_tie(&other.cards))
+    }
+}
+
+impl<const PART_TWO: bool> PartialOrd for Hand<PART_TWO> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 fn main() {
+    part::<false>(1);
+    part::<true>(2);
+}
+
+fn part<const PART_TWO: bool>(number: usize) {
     // let input = include_str!("../../test_input.txt");
     let input = include_str!("../../input.txt");
 
-    let mut hands: Vec<_> = input.lines().map(Hand::parse).collect();
+    let mut hands: Vec<_> = input.lines().map(Hand::<PART_TWO>::parse).collect();
     hands.sort();
 
-    let part1: u32 = hands
+    let answer: u32 = hands
         .into_iter()
         .enumerate()
         .map(|(rank, hand)| (rank as u32 + 1) * hand.bid)
         .sum();
 
-    println!("part1 = {part1}");
+    println!("part{number} = {answer}");
 }
