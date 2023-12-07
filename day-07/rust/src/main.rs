@@ -75,7 +75,8 @@ impl<const BEST: bool, const PART_TWO: bool> Cards<BEST, PART_TWO> {
             match map.values().filter(|count| **count == 2).count() {
                 2 => Type::TwoPair,
                 1 => Type::OnePair,
-                _ => Type::HighCard,
+                0 => Type::HighCard,
+                _ => unreachable!("invalid type"),
             }
         }
     }
@@ -92,12 +93,10 @@ impl<const BEST: bool, const PART_TWO: bool> Cards<BEST, PART_TWO> {
             .zip(other.0)
             .try_fold((), |_, (left, right)| match left.0.cmp(&right.0) {
                 Ordering::Equal => ControlFlow::Continue(()),
-                Ordering::Greater => ControlFlow::Break(TieBreak::Left),
-                Ordering::Less => ControlFlow::Break(TieBreak::Right),
+                order => ControlFlow::Break(order),
             }) {
             ControlFlow::Continue(()) => Ordering::Equal,
-            ControlFlow::Break(TieBreak::Left) => Ordering::Greater,
-            ControlFlow::Break(TieBreak::Right) => Ordering::Less,
+            ControlFlow::Break(order) => order,
         }
     }
 }
@@ -136,11 +135,6 @@ impl<const BEST: bool, const PART_TWO: bool> Cards<BEST, PART_TWO> {
     fn assume_best(self) -> Cards<true, PART_TWO> {
         Cards(self.0)
     }
-}
-
-enum TieBreak {
-    Left,
-    Right,
 }
 
 impl<const BEST: bool, const PART_TWO: bool> Ord for Cards<BEST, PART_TWO> {
