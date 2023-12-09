@@ -1,15 +1,14 @@
 fun is_space c = c = #" "
 fun is_newline c = c = #"\n"
 fun parse_num str = valOf (Int.fromString str)
-fun parse_row row = map parse_num (String.fields is_space row)
-fun trim str = Substring.string (Substring.trimr 1 (Substring.full str))
+fun parse_row row = map parse_num (String.tokens is_space row)
 fun sum list = foldl op + 0 list
 fun println str = print (str ^ "\n")
 
 (* val file = TextIO.openIn "../test_input.txt" *)
 val file = TextIO.openIn "../input.txt"
-val input = trim (TextIO.inputAll file)
-val lines = String.fields is_newline input
+val input = TextIO.inputAll file
+val lines = String.tokens is_newline input
 val rows = map parse_row lines
 
 (* Returns a list containing the first n items of a list. *)
