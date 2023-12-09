@@ -37,4 +37,7 @@ fun solve row =
   end
 
 val part1 = sum (List.map solve rows)
+val part2 = sum (List.map solve (List.map List.rev rows))
+
 val _ = println ("part1 = " ^ (Int.toString part1))
+val _ = println ("part2 = " ^ (Int.toString part2))
