@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
+use std::iter::successors;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Tile {
@@ -125,28 +126,7 @@ fn part1(grid: &Grid, start: Point) -> HashSet<Point> {
 }
 
 fn part2(mut grid: Grid, pipe: HashSet<Point>, start: Point) {
-    // try to escape
-    // dbg!(grounds);
-
-    // debug(&grid);
     remove_superfluous_tiles(&mut grid, &pipe);
-    // println!();
-    // debug(&grid);
-    // println!();
-
-    // check grounds after removing superfluous tiles
-    let grounds: HashSet<Point> = grid
-        .iter()
-        .enumerate()
-        .flat_map(|(y, row)| {
-            row.iter()
-                .enumerate()
-                .map(move |(x, tile)| (Point { y, x }, tile))
-        })
-        .filter(|(_, tile)| **tile == Tile::Ground)
-        .map(|(point, _)| point)
-        .filter(|point| point.x != 0 && point.x != 140 && point.y != 0 && point.y != 140)
-        .collect();
 
     // Replace start with whatever it should be
     let what_to_replace_start_with = start.calculate_start(&grid);
@@ -155,42 +135,48 @@ fn part2(mut grid: Grid, pipe: HashSet<Point>, start: Point) {
         .find_map(|row| row.iter_mut().find(|tile| **tile == Tile::Start))
         .unwrap();
     *start_tile = what_to_replace_start_with;
-    // debug(&grid);
-    // println!();
 
-    let start = QueuePoint {
-        point: Point { y: 0, x: 0 },
-        between: None,
-    };
-    let mut queue = VecDeque::from([start]);
-    let mut seen = HashSet::new();
+    let mut inside = HashSet::new();
+    for y in 0..grid.len() {
+        for x in 0..grid.len() {
+            let start = Point { y, x };
+            if pipe.contains(&start) {
+                continue;
+            }
 
-    // while let Some(queue_point) = queue.pop_front() {
-    while let Some(queue_point) = queue.pop_back() {
-        if !seen.insert(queue_point.point) {
-            continue;
-        }
+            let mut crossings = 0;
+            let mut last_cross = None;
+            for point in successors(Some(start), |p| p.checked_down(&grid)) {
+                match (point.lookup(&grid), last_cross) {
+                    (Tile::Horizontal, _) => {
+                        crossings += 1;
+                        last_cross = None;
+                    }
+                    (Tile::NorthWest | Tile::SouthWest, None) => last_cross = Some(Direction::Left),
+                    (Tile::NorthEast | Tile::SouthEast, None) => {
+                        last_cross = Some(Direction::Right)
+                    }
+                    (Tile::NorthWest | Tile::SouthWest, Some(Direction::Right)) => {
+                        crossings += 1;
+                        last_cross = None;
+                    }
+                    (Tile::NorthEast | Tile::SouthEast, Some(Direction::Left)) => {
+                        crossings += 1;
+                        last_cross = None;
+                    }
+                    (Tile::NorthWest, Some(Direction::Left)) => last_cross = None,
+                    (Tile::NorthEast, Some(Direction::Right)) => last_cross = None,
+                    _ => (),
+                }
+            }
 
-        // dbg!(queue_point);
-
-        let neighbors = queue_point.neighbors_animal(&grid);
-
-        for neighbor in neighbors {
-            match neighbor {
-                Reachable::Unreachable => continue,
-                Reachable::Reachable(neighbor) => queue.push_back(neighbor),
+            if crossings % 2 == 1 {
+                inside.insert(start);
             }
         }
     }
 
-    let inside: HashSet<Point> = grounds.difference(&seen).copied().collect();
-    // println!();
-    // dbg!(&inside);
     println!("part2 = {}", inside.len());
-
-    // let test = Point { y: 6, x: 7 };
-    // let neighbors: Vec<_> = test.reachable_neighbors_animal(&grid).collect();
-    // dbg!(neighbors);
 }
 
 fn remove_superfluous_tiles(grid: &mut [Vec<Tile>], pipe: &HashSet<Point>) {
@@ -301,6 +287,14 @@ impl Point {
         }
     }
 
+    fn checked_down(&self, grid: &Grid) -> Option<Self> {
+        let y = self.y + 1;
+        match y >= grid.len() {
+            true => None,
+            false => Some(Self { y, ..*self }),
+        }
+    }
+
     /// Returns the direction to move in to go from self to other.
     ///
     /// Assumes the points are neighbors.
@@ -342,15 +336,6 @@ impl Point {
             _ => unreachable!(":("),
         }
     }
-
-    // fn move_(&self, direction: Direction) -> Self {
-    //     match direction {
-    //         Direction::Up => self.up(),
-    //         Direction::Down => self.down(),
-    //         Direction::Left => self.left(),
-    //         Direction::Right => self.right(),
-    //     }
-    // }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -369,766 +354,4 @@ fn debug(grid: &Grid) {
         }
         println!();
     }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-struct QueuePoint {
-    point: Point,
-    between: Option<Direction>,
-}
-
-impl QueuePoint {
-    fn checked_up(&self) -> Option<Self> {
-        self.point.y.checked_sub(1).map(|y| Self {
-            point: Point { y, ..self.point },
-            ..*self
-        })
-    }
-
-    fn checked_down(&self, grid: &Grid) -> Option<Self> {
-        let y = self.point.y + 1;
-        match y >= grid.len() {
-            true => None,
-            false => Some(Self {
-                point: Point { y, ..self.point },
-                ..*self
-            }),
-        }
-    }
-
-    fn checked_left(&self) -> Option<Self> {
-        self.point.x.checked_sub(1).map(|x| Self {
-            point: Point { x, ..self.point },
-            ..*self
-        })
-    }
-
-    fn checked_right(&self, grid: &Grid) -> Option<Self> {
-        let x = self.point.x + 1;
-        match x >= grid.len() {
-            true => None,
-            false => Some(Self {
-                point: Point { x, ..self.point },
-                ..*self
-            }),
-        }
-    }
-
-    fn neighbors_animal<'g, 's: 'g>(
-        &'s self,
-        grid: &'g Grid,
-    ) -> impl Iterator<Item = Reachable> + 'g {
-        [
-            self.checked_up(),
-            self.checked_down(grid),
-            self.checked_left(),
-            self.checked_right(grid),
-        ]
-        .into_iter()
-        .flatten()
-        .map(|neighbor| self.reachable_animal(&neighbor, grid))
-    }
-
-    // fn reachable_neighbors_animal<'g, 's: 'g>(
-    //     &'s self,
-    //     grid: &'g Grid,
-    // ) -> impl Iterator<Item = Reachable> + 'g {
-    //     self.neighbors_animal(grid)
-    //         .map(|neighbor| self.reachable_animal(neighbor, grid))
-    // }
-
-    fn with(self, between: Option<Direction>) -> Self {
-        Self { between, ..self }
-    }
-
-    fn reachable_animal(&self, other: &Self, grid: &Grid) -> Reachable {
-        let direction = self.point.diff(&other.point);
-
-        // TODO: Start?
-        #[allow(clippy::match_like_matches_macro)]
-        match (
-            direction,
-            self.point.lookup(grid),
-            other.point.lookup(grid),
-            self.between,
-        ) {
-            // Unreachable cases
-            (_, Tile::Start, _, _) => unreachable!("start should be gone"),
-            (_, _, Tile::Start, _) => unreachable!("start should be gone"),
-            (
-                _,
-                Tile::NorthEast
-                | Tile::NorthWest
-                | Tile::SouthWest
-                | Tile::SouthEast
-                | Tile::Vertical
-                | Tile::Horizontal,
-                _,
-                None,
-            ) => unreachable!("between must be set"),
-            (_, Tile::Vertical, _, Some(Direction::Up | Direction::Down)) => {
-                unreachable!("bad between")
-            }
-            (_, Tile::Horizontal, _, Some(Direction::Left | Direction::Right)) => {
-                unreachable!("bad between")
-            }
-            (
-                Direction::Right,
-                Tile::Vertical,
-                Tile::Horizontal | Tile::NorthWest | Tile::SouthWest,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Left,
-                Tile::Vertical,
-                Tile::Horizontal | Tile::NorthEast | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Up,
-                Tile::Horizontal,
-                Tile::Vertical | Tile::SouthWest | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Down,
-                Tile::Horizontal,
-                Tile::Vertical | Tile::NorthWest | Tile::NorthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::Horizontal | Tile::NorthWest | Tile::NorthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Down,
-                Tile::NorthWest,
-                Tile::Vertical | Tile::NorthWest | Tile::NorthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::Vertical | Tile::NorthWest | Tile::SouthWest,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Right,
-                Tile::NorthWest,
-                Tile::Horizontal | Tile::NorthWest | Tile::SouthWest,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Up,
-                Tile::SouthWest,
-                Tile::Vertical | Tile::SouthWest | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::Horizontal | Tile::SouthWest | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::Vertical | Tile::NorthWest | Tile::SouthWest,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Right,
-                Tile::SouthWest,
-                Tile::Horizontal | Tile::NorthWest | Tile::SouthWest,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Up,
-                Tile::SouthEast,
-                Tile::Vertical | Tile::SouthWest | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::Horizontal | Tile::SouthWest | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Left,
-                Tile::SouthEast,
-                Tile::Horizontal | Tile::NorthEast | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::Vertical | Tile::NorthEast | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::Horizontal | Tile::NorthWest | Tile::NorthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Down,
-                Tile::NorthEast,
-                Tile::Vertical | Tile::NorthWest | Tile::NorthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Left,
-                Tile::NorthEast,
-                Tile::Horizontal | Tile::NorthEast | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::Vertical | Tile::NorthEast | Tile::SouthEast,
-                _,
-            ) => unreachable!("bad map"),
-
-            // Always allowed to move into Vertical & Horizontal tiles from the correct directions.
-            (Direction::Up | Direction::Down, Tile::Vertical, Tile::Vertical, _) => {
-                Reachable::Reachable(*other)
-            }
-            (Direction::Left | Direction::Right, Tile::Horizontal, Tile::Horizontal, _) => {
-                Reachable::Reachable(*other)
-            }
-
-            // Same as above but rounding a corner updates `between`.
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::Vertical,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::Vertical,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::Vertical,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::Vertical,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::Vertical,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::Vertical,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::Vertical,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::Vertical,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::Horizontal,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::Horizontal,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::Horizontal,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::Horizontal,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::Horizontal,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::Horizontal,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::Horizontal,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::Horizontal,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-
-            // Always allowed to move from Vertical & Horizontal along the axis.
-            (Direction::Up | Direction::Down, Tile::Vertical, _, _) => Reachable::Reachable(*other),
-            (Direction::Left | Direction::Right, Tile::Horizontal, _, _) => {
-                Reachable::Reachable(*other)
-            }
-
-            // Never allowed to move into Vertical & Horizontal tiles from the wrong directions.
-            (Direction::Up | Direction::Down, _, Tile::Horizontal, _) => Reachable::Unreachable,
-            (Direction::Left | Direction::Right, _, Tile::Vertical, _) => Reachable::Unreachable,
-
-            // Not allowed to cross over Horizontal / Vertical
-            (Direction::Up, Tile::Horizontal, _, Some(Direction::Down)) => Reachable::Unreachable,
-            (Direction::Down, Tile::Horizontal, _, Some(Direction::Up)) => Reachable::Unreachable,
-            (Direction::Left, Tile::Vertical, _, Some(Direction::Right)) => Reachable::Unreachable,
-            (Direction::Right, Tile::Vertical, _, Some(Direction::Left)) => Reachable::Unreachable,
-
-            // Always allowed to leave a Vertical / Horizontal if moving the correct way.
-            (Direction::Up, Tile::Horizontal, _, Some(Direction::Up)) => {
-                Reachable::Reachable(other.with(Some(Direction::Down)))
-            }
-            (Direction::Down, Tile::Horizontal, _, Some(Direction::Down)) => {
-                Reachable::Reachable(other.with(Some(Direction::Up)))
-            }
-            (Direction::Left, Tile::Vertical, _, Some(Direction::Left)) => {
-                Reachable::Reachable(other.with(Some(Direction::Right)))
-            }
-            (Direction::Right, Tile::Vertical, _, Some(Direction::Right)) => {
-                Reachable::Reachable(other.with(Some(Direction::Left)))
-            }
-
-            // Not allowed to cross over elbow from wrong side.
-            (Direction::Up, Tile::SouthWest, _, Some(Direction::Down | Direction::Left)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Up, Tile::SouthEast, _, Some(Direction::Down | Direction::Right)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Down, Tile::NorthWest, _, Some(Direction::Up | Direction::Left)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Down, Tile::NorthEast, _, Some(Direction::Up | Direction::Right)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Left, Tile::NorthEast, _, Some(Direction::Up | Direction::Right)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Left, Tile::SouthEast, _, Some(Direction::Down | Direction::Right)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Right, Tile::NorthWest, _, Some(Direction::Up | Direction::Left)) => {
-                Reachable::Unreachable
-            }
-            (Direction::Right, Tile::SouthWest, _, Some(Direction::Down | Direction::Left)) => {
-                Reachable::Unreachable
-            }
-
-            // Moving from Ground into a gap will set the `between` value.
-            (Direction::Up, Tile::Ground, Tile::NorthWest, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Right)))
-            }
-            (Direction::Up, Tile::Ground, Tile::NorthEast, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Left)))
-            }
-            (Direction::Down, Tile::Ground, Tile::SouthWest, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Right)))
-            }
-            (Direction::Down, Tile::Ground, Tile::SouthEast, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Left)))
-            }
-            (Direction::Right, Tile::Ground, Tile::SouthEast, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Up)))
-            }
-            (Direction::Right, Tile::Ground, Tile::NorthEast, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Down)))
-            }
-            (Direction::Left, Tile::Ground, Tile::SouthWest, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Up)))
-            }
-            (Direction::Left, Tile::Ground, Tile::NorthWest, _) => {
-                Reachable::Reachable(other.with(Some(Direction::Down)))
-            }
-
-            // Always allowed to move from Ground into Ground.
-            (_, Tile::Ground, Tile::Ground, _) => Reachable::Reachable(*other),
-
-            // Always allowed to move to Ground if between matches (and clear between).
-            (Direction::Up, _, Tile::Ground, Some(Direction::Up)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Down, _, Tile::Ground, Some(Direction::Down)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Left, _, Tile::Ground, Some(Direction::Left)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Right, _, Tile::Ground, Some(Direction::Right)) => {
-                Reachable::Reachable(other.with(None))
-            }
-
-            // Allowed to move from elbow to Ground in some cases (and clear between).
-            (Direction::Left, Tile::SouthEast, Tile::Ground, Some(Direction::Up)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Left, Tile::NorthEast, Tile::Ground, Some(Direction::Down)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Right, Tile::NorthWest, Tile::Ground, Some(Direction::Down)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Right, Tile::SouthWest, Tile::Ground, Some(Direction::Up)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Up, Tile::SouthWest, Tile::Ground, Some(Direction::Right)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Up, Tile::SouthEast, Tile::Ground, Some(Direction::Left)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Down, Tile::NorthEast, Tile::Ground, Some(Direction::Left)) => {
-                Reachable::Reachable(other.with(None))
-            }
-            (Direction::Down, Tile::NorthWest, Tile::Ground, Some(Direction::Right)) => {
-                Reachable::Reachable(other.with(None))
-            }
-
-            // Allowed to go from elbow to elbow sometimes.
-            (
-                Direction::Right,
-                Tile::NorthWest,
-                Tile::NorthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Right,
-                Tile::NorthWest,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::SouthEast,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::NorthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Left,
-                Tile::NorthWest,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::SouthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::SouthEast,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::NorthWest,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::NorthWest,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::NorthWest,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::SouthWest,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::NorthEast,
-                Tile::SouthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::NorthEast,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Down,
-                Tile::NorthEast,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Left,
-                Tile::NorthEast,
-                Tile::NorthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Left,
-                Tile::NorthEast,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::SouthWest,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::NorthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Right,
-                Tile::NorthEast,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-
-            (
-                Direction::Left,
-                Tile::SouthEast,
-                Tile::SouthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Left,
-                Tile::SouthEast,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::NorthWest,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::SouthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Right,
-                Tile::SouthEast,
-                Tile::SouthWest,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::NorthEast,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::NorthWest,
-                Some(Direction::Down | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthEast,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::SouthEast,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Up,
-                Tile::SouthEast,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-
-            (
-                Direction::Right,
-                Tile::SouthWest,
-                Tile::SouthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Right,
-                Tile::SouthWest,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::NorthWest,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Down,
-                Tile::SouthWest,
-                Tile::NorthEast,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::SouthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Up))),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::SouthEast,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::NorthEast,
-                Some(Direction::Down | Direction::Left),
-            ) => Reachable::Reachable(other.with(Some(Direction::Left))),
-            (
-                Direction::Left,
-                Tile::SouthWest,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Up,
-                Tile::SouthWest,
-                Tile::NorthWest,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Right))),
-            (
-                Direction::Up,
-                Tile::SouthWest,
-                Tile::NorthEast,
-                Some(Direction::Up | Direction::Right),
-            ) => Reachable::Reachable(other.with(Some(Direction::Down))),
-
-            // (Direction::Up, Tile::SouthWest, Tile::Ground, ) => todo!(),
-            otherwise => {
-                println!();
-                dbg!(self);
-                dbg!(other);
-                unreachable!("{otherwise:?}");
-            }
-        }
-    }
-}
-
-enum Reachable {
-    Unreachable,
-    Reachable(QueuePoint),
 }
