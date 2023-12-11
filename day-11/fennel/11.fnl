@@ -1,0 +1,108 @@
+(local fennel (require :fennel))
+
+; Turn a string into an array of characters.
+(fn chars [string]
+  (let [result {}]
+    (each [c (string.gmatch string ".")]
+      (table.insert result c))
+    result))
+
+; Turn an input file into a 2D array of characters.
+(fn load_map [file]
+  (let [lines (io.lines file)]
+    (let [rows (icollect [line lines]
+                 (icollect [_ c (ipairs (chars line))]
+                   c))]
+      rows)))
+
+(fn all [func array]
+  (var found true)
+  (each [_ item (ipairs array) &until (not found)]
+    (if (not (func item))
+        (set found false)))
+  found)
+
+(fn any [func array]
+  (var found false)
+  (each [_ item (ipairs array) &until found]
+    (if (func item)
+        (set found true)))
+  found)
+
+(fn contains [needle haystack]
+  (any #(= needle $1) haystack))
+
+(fn empty_space [char]
+  (= "." char))
+
+(fn all_empty [table]
+  (all empty_space table))
+
+; TODO: Flatten?
+(fn find_galaxies [map]
+  (let [galaxies []]
+    (each [y row (ipairs map)]
+      (each [x c (ipairs row)]
+        (if (= "#" c)
+            (table.insert galaxies {: y : x}))))
+    galaxies))
+
+(fn find_empty_rows [map]
+  (icollect [y row (ipairs map)]
+    (if (all_empty row) y)))
+
+(fn columns [map]
+  (var columns [])
+  (let [row_length (length (. map 1))]
+    (for [x 1 row_length]
+      (table.insert columns (icollect [y _ (ipairs map)] (. (. map y) x)))))
+  columns)
+
+(fn find_empty_columns [map]
+  (icollect [x column (ipairs (columns map))]
+    (if (all_empty column) x)))
+
+(fn abs_diff [a b]
+  (if (> a b)
+      (- a b)
+      (- b a)))
+
+(fn manhattan_distance [a b]
+  (+ (abs_diff (. a :y) (. b :y)) (abs_diff (. a :x) (. b :x))))
+
+(fn range [a b]
+  (let [result []]
+    (if (> a b)
+        (for [i b a]
+          (table.insert result i))
+        (for [i a b]
+          (table.insert result i)))
+    result))
+
+(fn overlap [a b]
+  (accumulate [sum 0 _ item (ipairs a)]
+    (+ sum (if (contains item b) 1 0))))
+
+(fn part1 [galaxies empty_rows empty_columns]
+  (var result 0) ; TODO: part 2 here
+  (for [a 1 (length galaxies)]
+    (for [b (+ 1 a) (length galaxies)]
+      (let [galaxy_a (. galaxies a)
+            galaxy_b (. galaxies b)
+            naive_distance (manhattan_distance galaxy_a galaxy_b)
+            double_rows (overlap empty_rows
+                                 (range (. galaxy_a :y) (. galaxy_b :y)))
+            double_columns (overlap empty_columns
+                                    (range (. galaxy_a :x) (. galaxy_b :x)))]
+        (set result (+ result naive_distance double_rows double_columns)))))
+  result)
+
+(fn main [file]
+  (let [map (load_map file)
+        galaxies (find_galaxies map)
+        empty_rows (find_empty_rows map)
+        empty_columns (find_empty_columns map)]
+    (print (.. "part1 = " (part1 galaxies empty_rows empty_columns)))))
+
+; (main :../test_input.txt)
+(main :../input.txt)
