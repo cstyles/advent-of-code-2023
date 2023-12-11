@@ -30,6 +30,7 @@ fn main() {
         .collect();
 
     let mut part1 = 0;
+    let mut part2 = 0;
     for (i, &galaxy_a) in galaxies.iter().enumerate() {
         for &galaxy_b in galaxies.iter().skip(i + 1) {
             let naive_distance = manhattan_distance(galaxy_a, galaxy_b);
@@ -44,12 +45,13 @@ fn main() {
                 .filter(|r| range(galaxy_a.1, galaxy_b.1).contains(*r))
                 .count();
 
-            let distance = naive_distance + double_rows + double_columns;
-            part1 += distance;
+            part1 += naive_distance + double_rows + double_columns;
+            part2 += naive_distance + 999_999 * (double_rows + double_columns);
         }
     }
 
     println!("part1 = {part1}");
+    println!("part2 = {part2}");
 }
 
 fn columns(grid: &[Vec<char>]) -> impl Iterator<Item = Vec<char>> + '_ {
