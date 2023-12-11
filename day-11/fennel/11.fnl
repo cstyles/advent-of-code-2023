@@ -55,10 +55,6 @@
       (table.insert columns (icollect [y _ (ipairs map)] (. (. map y) x)))))
   columns)
 
-(fn find_empty_columns [map]
-  (icollect [x column (ipairs (columns map))]
-    (if (all_empty column) x)))
-
 (fn abs_diff [a b]
   (if (> a b)
       (- a b)
@@ -100,7 +96,7 @@
   (let [map (load_map file)
         galaxies (find_galaxies map)
         empty_rows (find_empty_rows map)
-        empty_columns (find_empty_columns map)
+        empty_columns (find_empty_rows (columns map))
         [part1 part2] (solve galaxies empty_rows empty_columns)]
     (print (.. "part1 = " part1))
     (print (.. "part2 = " part2))))
