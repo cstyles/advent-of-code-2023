@@ -32,11 +32,8 @@
 (fn contains [needle haystack]
   (any #(= needle $1) haystack))
 
-(fn empty_space [char]
-  (= "." char))
-
 (fn all_empty [table]
-  (all empty_space table))
+  (all #(= "." $1) table))
 
 ; TODO: Flatten?
 (fn find_galaxies [map]
