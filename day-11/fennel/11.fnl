@@ -71,17 +71,16 @@
   (+ (abs_diff (. a :y) (. b :y)) (abs_diff (. a :x) (. b :x))))
 
 (fn range [a b]
-  (let [result []]
-    (if (> a b)
-        (for [i b a]
-          (table.insert result i))
-        (for [i a b]
-          (table.insert result i)))
-    result))
+  (if (< a b)
+      [a b]
+      [b a]))
 
-(fn overlap [a b]
-  (accumulate [sum 0 _ item (ipairs a)]
-    (+ sum (if (contains item b) 1 0))))
+(fn in_range [x [a b]]
+  (and (>= x a) (< x b)))
+
+(fn overlap [empty_row_or_columns some_range]
+  (accumulate [sum 0 _ item (ipairs empty_row_or_columns)]
+    (+ sum (if (in_range item some_range) 1 0))))
 
 (fn solve [galaxies empty_rows empty_columns]
   (var part1 0)
