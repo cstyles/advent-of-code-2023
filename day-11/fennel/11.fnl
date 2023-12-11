@@ -83,8 +83,9 @@
   (accumulate [sum 0 _ item (ipairs a)]
     (+ sum (if (contains item b) 1 0))))
 
-(fn part1 [galaxies empty_rows empty_columns]
-  (var result 0) ; TODO: part 2 here
+(fn solve [galaxies empty_rows empty_columns]
+  (var part1 0)
+  (var part2 0)
   (for [a 1 (length galaxies)]
     (for [b (+ 1 a) (length galaxies)]
       (let [galaxy_a (. galaxies a)
@@ -94,15 +95,19 @@
                                  (range (. galaxy_a :y) (. galaxy_b :y)))
             double_columns (overlap empty_columns
                                     (range (. galaxy_a :x) (. galaxy_b :x)))]
-        (set result (+ result naive_distance double_rows double_columns)))))
-  result)
+        (set part1 (+ part1 naive_distance double_rows double_columns))
+        (set part2
+             (+ part2 naive_distance (* 999999 (+ double_rows double_columns)))))))
+  [part1 part2])
 
 (fn main [file]
   (let [map (load_map file)
         galaxies (find_galaxies map)
         empty_rows (find_empty_rows map)
-        empty_columns (find_empty_columns map)]
-    (print (.. "part1 = " (part1 galaxies empty_rows empty_columns)))))
+        empty_columns (find_empty_columns map)
+        [part1 part2] (solve galaxies empty_rows empty_columns)]
+    (print (.. "part1 = " part1))
+    (print (.. "part2 = " part2))))
 
 ; (main :../test_input.txt)
 (main :../input.txt)
