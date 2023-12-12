@@ -11,17 +11,12 @@ val input = TextIO.inputAll file
 val lines = String.tokens is_newline input
 val rows = map parse_row lines
 
-(* Returns a list containing the first n items of a list. *)
-fun take 0 _ = []
-  | take _ [] = []
-  | take n (h::t) = h :: take (n - 1) t
-
 (* Returns a list of lists. Each sub-list is an N-item overlapping slice from the original list. *)
 fun windows n list =
   case (n > length list, list) of
        (true, _) => []
      | (false, []) => []
-     | (false, (h::t)) => (take n list) :: (windows n t)
+     | (false, (h::t)) => (List.take (list, n)) :: (windows n t)
 
 (* Subtract the first item of a list from the second *)
 fun sub2 (a :: [b]) = b - a
