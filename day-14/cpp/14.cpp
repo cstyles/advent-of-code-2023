@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <unordered_map>
 
 void debug(char* grid);
 void tilt_north(char* grid);
@@ -37,16 +39,48 @@ int main() {
 
   free(line);
 
-  /* debug(grid); */
-  tilt_north(grid);
-  /* tilt_south(grid); */
-  /* tilt_east(grid); */
-  /* tilt_west(grid); */
-  /* printf("\n"); */
-  /* debug(grid); */
+  char* part1_grid = (char*) malloc(sizeof(char) * DIMENSION * DIMENSION);
+  memcpy(part1_grid, grid, DIMENSION * DIMENSION);
 
-  printf("part1 = %d\n", load(grid));
+  tilt_north(part1_grid);
 
+  printf("part1 = %d\n", load(part1_grid));
+  free(part1_grid);
+
+  std::unordered_map<std::string, int> seen;
+  seen[grid] = 0;
+
+  int first_cycle_of_loop;
+  int current_cycle = 0;
+
+  while (true) {
+    current_cycle += 1;
+
+    tilt_north(grid);
+    tilt_west(grid);
+    tilt_south(grid);
+    tilt_east(grid);
+
+    if (seen.count(grid) > 0) {
+      first_cycle_of_loop = seen[grid];
+      break;
+    } else {
+      seen[grid] = current_cycle;
+    }
+  }
+
+  int loop_length = current_cycle - first_cycle_of_loop;
+  int how_many_loops = (1000000000 - current_cycle) / loop_length;
+  int leftover_cycles = 1000000000 - current_cycle - loop_length * how_many_loops;
+
+  for (int x = 0; x < leftover_cycles; x++) {
+    tilt_north(grid);
+    tilt_west(grid);
+    tilt_south(grid);
+    tilt_east(grid);
+  }
+
+  printf("part2 = %d\n", load(grid));
   free(grid);
 }
 
