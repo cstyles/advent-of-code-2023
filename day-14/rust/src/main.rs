@@ -40,16 +40,15 @@ fn tilt_north(grid: &mut Grid) {
                     continue;
                 };
 
-                let Some(up_y) = y.checked_sub(1) else {
-                    continue;
-                };
-
-                let tile_above = grid[up_y][x];
-                if tile_above == Tile::Empty {
-                    grid[up_y][x] = Tile::Round;
+                if let Some(tile_above) = y
+                    .checked_sub(1)
+                    .map(|y| &mut grid[y][x])
+                    .filter(|tile| **tile == Tile::Empty)
+                {
+                    *tile_above = Tile::Round;
                     grid[y][x] = Tile::Empty;
                     rocks_moved = true;
-                }
+                };
             }
         }
 
@@ -71,14 +70,12 @@ fn tilt_south(grid: &mut Grid) {
                     continue;
                 };
 
-                let down_y = y + 1;
-                if down_y >= grid.len() {
-                    continue;
-                };
-
-                let tile_below = grid[down_y][x];
-                if tile_below == Tile::Empty {
-                    grid[down_y][x] = Tile::Round;
+                if let Some(tile_below) = grid
+                    .get_mut(y + 1)
+                    .map(|row| &mut row[x])
+                    .filter(|tile| **tile == Tile::Empty)
+                {
+                    *tile_below = Tile::Round;
                     grid[y][x] = Tile::Empty;
                     rocks_moved = true;
                 }
@@ -103,13 +100,12 @@ fn tilt_west(grid: &mut Grid) {
                     continue;
                 };
 
-                let Some(left_x) = x.checked_sub(1) else {
-                    continue;
-                };
-
-                let left_tile = row[left_x];
-                if left_tile == Tile::Empty {
-                    row[left_x] = Tile::Round;
+                if let Some(left_tile) = x
+                    .checked_sub(1)
+                    .map(|x| &mut row[x])
+                    .filter(|tile| **tile == Tile::Empty)
+                {
+                    *left_tile = Tile::Round;
                     row[x] = Tile::Empty;
                     rocks_moved = true;
                 }
@@ -127,22 +123,16 @@ fn tilt_east(grid: &mut Grid) {
         let mut rocks_moved = false;
 
         for x in 0..grid[0].len() {
-            for y in 0..grid.len() {
-                let tile = grid[y][x];
+            for row in grid.iter_mut() {
+                let tile = row[x];
 
                 if tile != Tile::Round {
                     continue;
                 };
 
-                let right_x = x + 1;
-                if right_x >= grid[0].len() {
-                    continue;
-                };
-
-                let right_tile = grid[y][right_x];
-                if right_tile == Tile::Empty {
-                    grid[y][right_x] = Tile::Round;
-                    grid[y][x] = Tile::Empty;
+                if let Some(right_tile) = row.get_mut(x + 1).filter(|tile| **tile == Tile::Empty) {
+                    *right_tile = Tile::Round;
+                    row[x] = Tile::Empty;
                     rocks_moved = true;
                 }
             }
@@ -177,24 +167,24 @@ fn main() {
     println!("part1 = {}", load(part1_grid));
 
     let mut seen: HashMap<Grid, usize> = [(grid.clone(), 0)].into();
-    let mut cycle = 0;
+    let mut current_cycle = 0;
 
     let first_cycle_of_loop = loop {
-        cycle += 1;
+        current_cycle += 1;
 
         tilt_north(&mut grid);
         tilt_west(&mut grid);
         tilt_south(&mut grid);
         tilt_east(&mut grid);
 
-        if let Some(prev_round) = seen.insert(grid.clone(), cycle) {
+        if let Some(prev_round) = seen.insert(grid.clone(), current_cycle) {
             break prev_round;
         }
     };
 
-    let cycle_length = cycle - first_cycle_of_loop;
-    let skip_factor = (1_000_000_000 - cycle) / cycle_length;
-    let leftover_cycles = 1_000_000_000 - cycle - cycle_length * skip_factor;
+    let loop_length = current_cycle - first_cycle_of_loop;
+    let how_many_loops = (1_000_000_000 - current_cycle) / loop_length;
+    let leftover_cycles = 1_000_000_000 - current_cycle - loop_length * how_many_loops;
 
     for _ in 0..leftover_cycles {
         tilt_north(&mut grid);
