@@ -15,5 +15,8 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 9   | [SML](day-09/sml/09.sml)                   | 17.3         | [Solution](day-09/rust/src/main.rs) | 1.4               |
 | 10  | TODO                                       | TODO         | [Solution](day-10/rust/src/main.rs) | 6.2               |
 | 11  | [Fennel](day-11/fennel/11.fnl)             | 369          | [Solution](day-11/rust/src/main.rs) | 2.4               |
+| 12  | [F#](day-12/fsharp/12.fs)                  | 5,834        | [Solution](day-12/rust/src/main.rs) | 533               |
+| 13  | TODO                                       | TODO         | [Solution](day-13/rust/src/main.rs) | 2.0               |
+| 14  | [C++](day-14/cpp/14.cpp)                   | 274          | [Solution](day-14/rust/src/main.rs) | 368               |
 
 All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
