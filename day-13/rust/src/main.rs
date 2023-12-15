@@ -186,9 +186,5 @@ fn main() {
 }
 
 fn one_off(a: &[Tile], b: &[Tile]) -> bool {
-    a.iter()
-        .zip(b.iter())
-        .filter_map(|(a, b)| (a != b).then_some(1))
-        .sum::<u8>()
-        == 1
+    a.iter().zip(b.iter()).filter(|(a, b)| a != b).count() == 1
 }
