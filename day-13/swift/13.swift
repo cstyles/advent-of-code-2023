@@ -73,6 +73,73 @@ func horizontal_reflection(_ pattern: [[Tile]]) -> Int? {
   return nil
 }
 
+func vertical_reflection_smudge(_ pattern: [[Tile]]) -> Int? {
+  let columns = columns(pattern)
+  let old_vertical_reflection = vertical_reflection(pattern)
+
+  for x in 1..<columns.count {
+    if old_vertical_reflection == x {
+      continue
+    }
+
+    var left = x - 1
+    var right = x
+    var smudge_fixed = false
+
+    while true {
+      if columns[left] != columns[right] {
+        if !smudge_fixed && one_off(columns[left], columns[right]) {
+          smudge_fixed = true
+        } else {
+          break
+        }
+      }
+
+      if left == 0 || right == columns.count - 1 {
+        return x
+      } else {
+        left -= 1
+        right += 1
+      }
+    }
+  }
+
+  return nil
+}
+
+func horizontal_reflection_smudge(_ pattern: [[Tile]]) -> Int? {
+  let old_horizontal_reflection = horizontal_reflection(pattern)
+
+  for y in 1..<pattern.count {
+    if old_horizontal_reflection == y {
+      continue
+    }
+
+    var upper = y - 1
+    var lower = y
+    var smudge_fixed = false
+
+    while true {
+      if pattern[lower] != pattern[upper] {
+        if !smudge_fixed && one_off(pattern[lower], pattern[upper]) {
+          smudge_fixed = true
+        } else {
+          break
+        }
+      }
+
+      if upper == 0 || lower == pattern.count - 1 {
+        return y
+      } else {
+        upper -= 1
+        lower += 1
+      }
+    }
+  }
+
+  return nil
+}
+
 func summarize(_ pattern: [[Tile]]) -> Int {
   if let vertical_reflection = vertical_reflection(pattern) {
     return vertical_reflection
@@ -81,8 +148,20 @@ func summarize(_ pattern: [[Tile]]) -> Int {
   }
 }
 
-let file_name = "../test_input.txt"
-// let file_name = "../input.txt"
+func summarize_smudge(_ pattern: [[Tile]]) -> Int {
+  if let vertical_reflection = vertical_reflection_smudge(pattern) {
+    return vertical_reflection
+  } else {
+    return 100 * horizontal_reflection_smudge(pattern)!
+  }
+}
+
+func one_off(_ a: [Tile], _ b: [Tile]) -> Bool {
+  zip(a, b).filter({ (a, b) in a != b }).count == 1
+}
+
+// let file_name = "../test_input.txt"
+let file_name = "../input.txt"
 
 func parse_pattern(string: Substring) -> [[Tile]] {
   string
@@ -95,3 +174,6 @@ let patterns = input.split(separator: "\n\n").map(parse_pattern)
 
 let part1 = patterns.map(summarize).reduce(0, +)
 print("part1 = \(part1)")
+
+let part2 = patterns.map(summarize_smudge).reduce(0, +)
+print("part2 = \(part2)")
