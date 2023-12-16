@@ -19,6 +19,6 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 13  | [Swift](day-13/swift/13.swift)             | 18.2         | [Solution](day-13/rust/src/main.rs) | 2.0               |
 | 14  | [C++](day-14/cpp/14.cpp)                   | 274          | [Solution](day-14/rust/src/main.rs) | 368               |
 | 15  | [C](day-15/c/15.c)                         | 0.8          | [Solution](day-15/rust/src/main.rs) | 1.4               |
-| 15  | TODO                                       | TODO         | [Solution](day-16/rust/src/main.rs) | 24                |
+| 16  | [Rune](day-16/rune/16.rn)                  | 5,440        | [Solution](day-16/rust/src/main.rs) | 24                |
 
 All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
