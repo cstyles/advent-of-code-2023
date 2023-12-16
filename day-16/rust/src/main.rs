@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::iter::repeat;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Tile {
@@ -108,43 +109,44 @@ fn main() {
     let height = map.len();
     let width = map[0].len();
 
-    let mut part2 = 0;
-    for x in 0..width {
-        part2 = part2.max(solve(
-            &map,
-            Beam {
-                y: 0,
-                x,
-                direction: Direction::Down,
-            },
-        ));
-        part2 = part2.max(solve(
-            &map,
-            Beam {
-                y: height - 1,
-                x,
-                direction: Direction::Up,
-            },
-        ));
-    }
-    for y in 0..height {
-        part2 = part2.max(solve(
-            &map,
-            Beam {
-                y,
-                x: 0,
-                direction: Direction::Right,
-            },
-        ));
-        part2 = part2.max(solve(
-            &map,
-            Beam {
-                y,
-                x: width - 1,
-                direction: Direction::Left,
-            },
-        ));
-    }
+    let part2 = std::thread::scope(|scope| {
+        let top = repeat(0).zip(0..width).map(|(y, x)| Beam {
+            y,
+            x,
+            direction: Direction::Down,
+        });
+        let bottom = repeat(height - 1).zip(0..width).map(|(y, x)| Beam {
+            y,
+            x,
+            direction: Direction::Up,
+        });
+        let left = (0..height).zip(repeat(0)).map(|(y, x)| Beam {
+            y,
+            x,
+            direction: Direction::Right,
+        });
+        let right = (0..height).zip(repeat(width - 1)).map(|(y, x)| Beam {
+            y,
+            x,
+            direction: Direction::Left,
+        });
+
+        let handles: Vec<_> = top
+            .chain(bottom)
+            .chain(left)
+            .chain(right)
+            .map(|beam| {
+                let map_ref = &map;
+                scope.spawn(move || solve(map_ref, beam))
+            })
+            .collect();
+
+        handles
+            .into_iter()
+            .map(|handle| handle.join().unwrap())
+            .max()
+            .unwrap()
+    });
 
     println!("part2 = {part2}");
 }
