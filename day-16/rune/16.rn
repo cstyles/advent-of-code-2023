@@ -1,0 +1,147 @@
+use std::collections::HashSet;
+
+enum Tile {
+    Empty,
+    Vertical,
+    Horizontal,
+    Slash,
+    Backslash,
+}
+
+impl Tile {
+    fn parse(c) {
+        match c {
+            '.' => Self::Empty,
+            '|' => Self::Vertical,
+            '-' => Self::Horizontal,
+            '/' => Self::Slash,
+            '\\' => Self::Backslash,
+            _ => panic!("bad input: {}", c),
+        }
+    }
+}
+
+pub async fn main() {
+    // let input = fs::read_to_string("../test_input.txt").await.unwrap();
+    let input = fs::read_to_string("../input.txt").await.unwrap();
+    let map = input
+        .trim_end()
+        .split('\n')
+        .map(|line| line.trim_end().chars().map(Tile::parse).collect::<Vec>())
+        .collect::<Vec>();
+
+    let height = map.len();
+    let width = map[0].len();
+
+    let part1_beam = (0, 0, RIGHT);
+
+    let part1 = solve(map, part1_beam);
+    println!("part1 = {}", part1);
+}
+
+fn solve(map, beam) {
+    let height = map.len();
+    let width = map[0].len();
+
+    let beams = [beam];
+    let seen = HashSet::new();
+
+    while let Some(beam) = beams.pop() {
+        // dbg(beam);
+
+        if !seen.insert(beam) {
+            continue;
+        }
+
+        let (y, x, direction) = beam;
+
+        match (direction, lookup(map, beam)) {
+            (_, Tile::Empty) => beams.extend(next(beam, height, width)),
+            (0, Tile::Vertical) => beams.extend(next(beam, height, width)),
+            (1, Tile::Vertical) => beams.extend(next(beam, height, width)),
+            (2, Tile::Horizontal) => beams.extend(next(beam, height, width)),
+            (3, Tile::Horizontal) => beams.extend(next(beam, height, width)),
+
+            (0, Tile::Horizontal) => {
+                if let Some(beam) = right(beam, width) { beams.push(beam) }
+                if let Some(beam) = left(beam) { beams.push(beam) }
+            },
+            (1, Tile::Horizontal) => {
+                if let Some(beam) = right(beam, width) { beams.push(beam) }
+                if let Some(beam) = left(beam) { beams.push(beam) }
+            },
+
+            (2, Tile::Vertical) => {
+                if let Some(beam) = up(beam) { beams.push(beam) }
+                if let Some(beam) = down(beam, height) { beams.push(beam) }
+            },
+            (3, Tile::Vertical) => {
+                if let Some(beam) = up(beam) { beams.push(beam) }
+                if let Some(beam) = down(beam, height) { beams.push(beam) }
+            },
+
+            (0, Tile::Slash) => if let Some(beam) = right(beam, width) { beams.push(beam) },
+            (0, Tile::Backslash) => if let Some(beam) = left(beam) { beams.push(beam) },
+            (1, Tile::Slash) => if let Some(beam) = left(beam) { beams.push(beam) },
+            (1, Tile::Backslash) => if let Some(beam) = right(beam, width) { beams.push(beam) },
+            (2, Tile::Slash) => if let Some(beam) = down(beam, height) { beams.push(beam) },
+            (2, Tile::Backslash) => if let Some(beam) = up(beam) { beams.push(beam) },
+            (3, Tile::Slash) => if let Some(beam) = up(beam) { beams.push(beam) },
+            (3, Tile::Backslash) => if let Some(beam) = down(beam, height) { beams.push(beam) },
+
+            _ => panic!("unreachable"),
+        }
+    }
+
+    seen
+        .iter()
+        .map(|(y, x, _dir)| (y, x))
+        .collect::<HashSet>()
+        .len()
+}
+
+fn lookup(map, (y, x, _dir)) {
+    map[y][x]
+}
+
+const UP = 0;
+const DOWN = 1;
+const LEFT = 2;
+const RIGHT = 3;
+
+fn next(beam, height, width) {
+    match beam.2 {
+        0 => up(beam),
+        1 => down(beam, height),
+        2 => left(beam),
+        3 => right(beam, width),
+    }
+}
+
+fn up((y, x, direction)) {
+    match y {
+        0 => None,
+        _ => Some((y - 1, x, UP)),
+    }
+}
+
+fn down((y, x, direction), height) {
+    match y >= height - 1 {
+        true => None,
+        false => Some((y + 1, x, DOWN)),
+    }
+}
+
+fn left((y, x, direction)) {
+    match x {
+        0 => None,
+        _ => Some((y, x - 1, LEFT)),
+    }
+}
+
+fn right((y, x, direction), width) {
+    match x >= width - 1 {
+        true => None,
+        false => Some((y, x + 1, RIGHT)),
+    }
+}
