@@ -24,6 +24,7 @@ impl Tile {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(u8)]
 enum Direction {
     Up,
     Down,
@@ -33,8 +34,8 @@ enum Direction {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct Beam {
-    y: usize,
-    x: usize,
+    y: u8,
+    x: u8,
     direction: Direction,
 }
 
@@ -47,7 +48,7 @@ impl Beam {
         })
     }
 
-    fn down(self, height: usize) -> Option<Self> {
+    fn down(self, height: u8) -> Option<Self> {
         match self.y >= height - 1 {
             true => None,
             false => Some(Self {
@@ -66,7 +67,7 @@ impl Beam {
         })
     }
 
-    fn right(self, width: usize) -> Option<Self> {
+    fn right(self, width: u8) -> Option<Self> {
         match self.x >= width - 1 {
             true => None,
             false => Some(Self {
@@ -77,7 +78,7 @@ impl Beam {
         }
     }
 
-    fn next(self, height: usize, width: usize) -> Option<Self> {
+    fn next(self, height: u8, width: u8) -> Option<Self> {
         match self.direction {
             Direction::Up => self.up(),
             Direction::Down => self.down(height),
@@ -106,8 +107,8 @@ fn main() {
     );
     println!("part1 = {part1}");
 
-    let height = map.len();
-    let width = map[0].len();
+    let height = map.len() as u8;
+    let width = map[0].len() as u8;
 
     let part2 = std::thread::scope(|scope| {
         let top = repeat(0).zip(0..width).map(|(y, x)| Beam {
@@ -154,8 +155,8 @@ fn main() {
 fn solve(map: &Map, beam: Beam) -> usize {
     let mut beams = vec![beam];
 
-    let height = map.len();
-    let width = map[0].len();
+    let height = map.len() as u8;
+    let width = map[0].len() as u8;
 
     let mut seen: HashSet<Beam> = [].into();
 
@@ -198,15 +199,15 @@ fn solve(map: &Map, beam: Beam) -> usize {
 
 type Map = Vec<Vec<Tile>>;
 
-fn lookup(map: &Map, (y, x): (usize, usize)) -> Tile {
-    map[y][x]
+fn lookup(map: &Map, (y, x): (u8, u8)) -> Tile {
+    map[y as usize][x as usize]
 }
 
 #[allow(dead_code)]
-fn debug_part1(map: &Map, part1: &HashSet<(usize, usize)>) {
+fn debug_part1(map: &Map, part1: &HashSet<(u8, u8)>) {
     for (y, row) in map.iter().enumerate() {
         for (x, _tile) in row.iter().enumerate() {
-            if part1.contains(&(y, x)) {
+            if part1.contains(&(y as u8, x as u8)) {
                 print!("#");
             } else {
                 print!(" ");
