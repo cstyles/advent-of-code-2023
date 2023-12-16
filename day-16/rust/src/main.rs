@@ -95,11 +95,62 @@ fn main() {
         .map(|line| line.chars().map(Tile::parse).collect())
         .collect();
 
-    let mut beams = vec![Beam {
-        y: 0,
-        x: 0,
-        direction: Direction::Right,
-    }];
+    let part1 = solve(
+        &map,
+        Beam {
+            y: 0,
+            x: 0,
+            direction: Direction::Right,
+        },
+    );
+    println!("part1 = {part1}");
+
+    let height = map.len();
+    let width = map[0].len();
+
+    let mut part2 = 0;
+    for x in 0..width {
+        part2 = part2.max(solve(
+            &map,
+            Beam {
+                y: 0,
+                x,
+                direction: Direction::Down,
+            },
+        ));
+        part2 = part2.max(solve(
+            &map,
+            Beam {
+                y: height - 1,
+                x,
+                direction: Direction::Up,
+            },
+        ));
+    }
+    for y in 0..height {
+        part2 = part2.max(solve(
+            &map,
+            Beam {
+                y,
+                x: 0,
+                direction: Direction::Right,
+            },
+        ));
+        part2 = part2.max(solve(
+            &map,
+            Beam {
+                y,
+                x: width - 1,
+                direction: Direction::Left,
+            },
+        ));
+    }
+
+    println!("part2 = {part2}");
+}
+
+fn solve(map: &Map, beam: Beam) -> usize {
+    let mut beams = vec![beam];
 
     let height = map.len();
     let width = map[0].len();
@@ -111,10 +162,7 @@ fn main() {
             continue;
         }
 
-        // println!("({}, {}): {:?}", beam.y, beam.x, beam.direction);
-        // std::thread::sleep(std::time::Duration::from_millis(10));
-
-        match (beam.direction, lookup(&map, (beam.y, beam.x))) {
+        match (beam.direction, lookup(map, (beam.y, beam.x))) {
             (_, Tile::Empty)
             | (Direction::Up, Tile::Vertical)
             | (Direction::Down, Tile::Vertical)
@@ -140,10 +188,10 @@ fn main() {
         };
     }
 
-    let part1: HashSet<_> = seen.into_iter().map(|beam| (beam.y, beam.x)).collect();
-    // debug_part1(&map, &part1);
-    let part1 = part1.len();
-    println!("part1 = {part1}");
+    seen.into_iter()
+        .map(|beam| (beam.y, beam.x))
+        .collect::<HashSet<_>>()
+        .len()
 }
 
 type Map = Vec<Vec<Tile>>;
