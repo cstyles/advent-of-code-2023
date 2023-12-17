@@ -1,0 +1,75 @@
+import std.stdio.STDOUT
+import std.fs.file
+
+class enum Direction {
+  case Left
+  case Right
+
+  fn static parse(c: String) -> Direction {
+    match c {
+      case "L" -> Left
+      case "R" -> Right
+      case _ -> panic("bad input")
+    }
+  }
+}
+
+class async Main {
+  fn async main {
+    # let f = file.ReadOnlyFile.new("../test_input.txt").unwrap
+    # let f = file.ReadOnlyFile.new("../test_input2.txt").unwrap
+    let f = file.ReadOnlyFile.new("../input.txt").unwrap
+
+    let mut bytes = ByteArray.new
+    f.read_all(bytes).unwrap
+    let input = bytes.to_string
+
+    let split_stream = input.split("\n\n")
+    let lrs = split_stream.next.unwrap.chars.map fn(c) { Direction.parse(c) }.to_array
+    let graph = split_stream
+      .next
+      .unwrap
+      .split("\n")
+      .map fn(line) {
+        let node = line.substring(0, 3)
+        let left = line.substring(7, 3)
+        let right = line.substring(12, 3)
+
+        (node, left, right)
+      }
+      .to_array
+
+    let graph = array_to_map(graph)
+    part1(lrs, graph)
+  }
+
+  fn part1 (directions: Array[Direction], graph: Map[String, (String, String)]) {
+    let mut i = 0
+    let mut node = "AAA"
+
+    while node != "ZZZ" {
+      let thing = graph.get(node)
+      node = match directions.get(i % directions.size) {
+        case Left -> thing.0
+        case Right -> thing.1
+      }
+
+      i += 1
+    }
+
+    STDOUT.new.print("part1 = {i}")
+  }
+}
+
+fn array_to_map (array: Array[(String, String, String)]) -> Map[String, (String, String)] {
+  let mut map = Map.new
+
+  loop {
+    match array.pop {
+      case Some(item) -> map.set(item.0, (item.1, item.2))
+      case None -> break
+    }
+  }
+
+  map
+}
