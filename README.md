@@ -11,7 +11,7 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 5   | [OCaml](day-05/ocaml/05.ml)                | 2.5          | [Solution](day-05/rust/src/main.rs) | 1.2               |
 | 6   | [Pen & Paper](day-06/pen-and-paper/06.jpg) | N/A          | [Solution](day-06/rust/src/main.rs) | 0.8               |
 | 7   | TODO                                       | TODO         | [Solution](day-07/rust/src/main.rs) | 118               |
-| 8   | TODO                                       | TODO         | [Solution](day-08/rust/src/main.rs) | 13                |
+| 8   | [Inko](day-08/inko/08.inko)                | 175          | [Solution](day-08/rust/src/main.rs) | 13                |
 | 9   | [SML](day-09/sml/09.sml)                   | 17.3         | [Solution](day-09/rust/src/main.rs) | 1.4               |
 | 10  | TODO                                       | TODO         | [Solution](day-10/rust/src/main.rs) | 6.2               |
 | 11  | [Fennel](day-11/fennel/11.fnl)             | 369          | [Solution](day-11/rust/src/main.rs) | 2.4               |
