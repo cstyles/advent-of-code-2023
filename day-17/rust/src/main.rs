@@ -21,13 +21,12 @@ fn main() {
 }
 
 fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
-    let (moves_remaining, min_moves_remaining) = if PART_TWO { (10, 0) } else { (3, 0) };
+    let moves_remaining = if PART_TWO { 10 } else { 3 };
 
     let start = HeapItem {
         point: Point { y: 0, x: 0 },
         direction: Direction::Right,
         moves_remaining,
-        min_moves_remaining,
         total_distance: 0,
     };
 
@@ -37,15 +36,23 @@ fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
     };
 
     let mut best_so_far = u32::MAX;
-    let mut shortest_distances: HashMap<(Point, Direction, u8, u8), u32> = [].into();
+    let mut shortest_distances: HashMap<(Point, Direction, u8), u32> = [].into();
     let mut heap: BinaryHeap<HeapItem> = [start].into();
+
+    // Allow us to start off part2 by moving downward.
+    if PART_TWO {
+        heap.push(HeapItem {
+            moves_remaining: 0,
+            ..start
+        });
+    }
 
     while let Some(heap_item) = heap.pop() {
         if heap_item.total_distance >= best_so_far {
             continue;
         }
 
-        if heap_item.point == destination && heap_item.min_moves_remaining == 0 {
+        if heap_item.point == destination && (!PART_TWO || heap_item.moves_remaining <= 6) {
             best_so_far = best_so_far.min(heap_item.total_distance);
         }
 
@@ -131,7 +138,6 @@ struct HeapItem {
     point: Point,
     direction: Direction,
     moves_remaining: u8,
-    min_moves_remaining: u8,
     total_distance: u32,
 }
 
@@ -141,11 +147,6 @@ impl Ord for HeapItem {
             .cmp(&other.total_distance)
             .reverse()
             .then_with(|| self.moves_remaining.cmp(&other.moves_remaining).reverse())
-            .then_with(|| {
-                self.min_moves_remaining
-                    .cmp(&other.min_moves_remaining)
-                    .reverse()
-            })
             .then_with(|| self.point.cmp(&other.point))
             .then_with(|| self.direction.cmp(&other.direction))
     }
@@ -158,17 +159,12 @@ impl PartialOrd for HeapItem {
 }
 
 impl HeapItem {
-    fn for_map(&self) -> (Point, Direction, u8, u8) {
-        (
-            self.point,
-            self.direction,
-            self.moves_remaining,
-            self.min_moves_remaining,
-        )
+    fn for_map(&self) -> (Point, Direction, u8) {
+        (self.point, self.direction, self.moves_remaining)
     }
 
     fn possible_moves<const PART_TWO: bool>(&self, grid: &Grid) -> Vec<Self> {
-        if PART_TWO && self.min_moves_remaining > 0 {
+        if PART_TWO && self.moves_remaining > 6 {
             return self
                 .point
                 .in_direction(self.direction, grid)
@@ -176,7 +172,6 @@ impl HeapItem {
                     point,
                     direction: self.direction,
                     moves_remaining: self.moves_remaining - 1,
-                    min_moves_remaining: self.min_moves_remaining - 1,
                     total_distance: self.total_distance + point.lookup(grid),
                 })
                 .into_iter()
@@ -201,18 +196,16 @@ impl HeapItem {
                         point,
                         direction,
                         moves_remaining: self.moves_remaining - 1,
-                        min_moves_remaining: 0,
                         total_distance: self.total_distance + point.lookup(grid),
                     }));
                 }
             } else {
-                let (moves_remaining, min_moves_remaining) = if PART_TWO { (9, 3) } else { (2, 0) };
+                let moves_remaining = if PART_TWO { 9 } else { 2 };
 
                 moves.extend(self.point.in_direction(direction, grid).map(|point| Self {
                     point,
                     direction,
                     moves_remaining,
-                    min_moves_remaining,
                     total_distance: self.total_distance + point.lookup(grid),
                 }));
             }
