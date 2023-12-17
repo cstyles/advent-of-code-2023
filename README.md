@@ -20,5 +20,6 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 14  | [C++](day-14/cpp/14.cpp)                   | 274          | [Solution](day-14/rust/src/main.rs) | 368               |
 | 15  | [C](day-15/c/15.c)                         | 0.8          | [Solution](day-15/rust/src/main.rs) | 1.4               |
 | 16  | [Rune](day-16/rune/16.rn)                  | 5,440        | [Solution](day-16/rust/src/main.rs) | 24                |
+| 17  | TODO                                       | TODO         | [Solution](day-17/rust/src/main.rs) | 331               |
 
 All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
