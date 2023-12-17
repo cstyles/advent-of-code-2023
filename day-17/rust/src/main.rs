@@ -31,8 +31,8 @@ fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
     };
 
     let destination = Point {
-        y: grid.len() - 1,
-        x: grid[0].len() - 1,
+        y: grid.len() as u8 - 1,
+        x: grid[0].len() as u8 - 1,
     };
 
     let mut best_so_far = u32::MAX;
@@ -86,8 +86,8 @@ enum Direction {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Point {
-    y: usize,
-    x: usize,
+    y: u8,
+    x: u8,
 }
 
 impl Point {
@@ -95,7 +95,7 @@ impl Point {
         self.y.checked_sub(1).map(|y| Self { y, ..*self })
     }
 
-    fn down(&self, height: usize) -> Option<Self> {
+    fn down(&self, height: u8) -> Option<Self> {
         match self.y >= height - 1 {
             true => None,
             false => Some(Self {
@@ -109,7 +109,7 @@ impl Point {
         self.x.checked_sub(1).map(|x| Self { x, ..*self })
     }
 
-    fn right(&self, width: usize) -> Option<Self> {
+    fn right(&self, width: u8) -> Option<Self> {
         match self.x >= width - 1 {
             true => None,
             false => Some(Self {
@@ -122,14 +122,14 @@ impl Point {
     fn in_direction(&self, direction: Direction, grid: &Grid) -> Option<Self> {
         match direction {
             Direction::Up => self.up(),
-            Direction::Down => self.down(grid.len()),
+            Direction::Down => self.down(grid.len() as u8),
             Direction::Left => self.left(),
-            Direction::Right => self.right(grid[0].len()),
+            Direction::Right => self.right(grid[0].len() as u8),
         }
     }
 
     fn lookup(&self, grid: &Grid) -> u32 {
-        grid[self.y][self.x]
+        grid[self.y as usize][self.x as usize]
     }
 }
 
