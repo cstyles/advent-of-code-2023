@@ -13,11 +13,15 @@ fn main() {
         .map(|line| line.chars().map(|n| n.to_digit(10).unwrap()).collect())
         .collect();
 
-    let part1 = solve::<false>(&grid);
-    println!("part1 = {part1}");
+    let (part1, part2) = std::thread::scope(|scope| {
+        let part1 = scope.spawn(|| solve::<false>(&grid));
+        let part2 = scope.spawn(|| solve::<true>(&grid));
 
-    let part2 = solve::<true>(&grid);
-    println!("part2 = {part2}");
+        (part1.join().unwrap(), part2.join().unwrap())
+    });
+
+    println!("part1 = {}", part1);
+    println!("part2 = {}", part2);
 }
 
 fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
