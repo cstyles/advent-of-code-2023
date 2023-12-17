@@ -1,5 +1,8 @@
 import std.stdio.STDOUT
+import std.cmp.Equal
 import std.fs.file
+import std.hash.Hash
+import std.set.Set
 
 class enum Direction {
   case Left
@@ -40,10 +43,11 @@ class async Main {
       .to_array
 
     let graph = array_to_map(graph)
-    part1(lrs, graph)
+    part1(ref lrs, ref graph)
+    part2(lrs, graph)
   }
 
-  fn part1 (directions: Array[Direction], graph: Map[String, (String, String)]) {
+  fn part1 (directions: ref Array[Direction], graph: ref Map[String, (String, String)]) {
     let mut i = 0
     let mut node = "AAA"
 
@@ -59,8 +63,77 @@ class async Main {
 
     STDOUT.new.print("part1 = {i}")
   }
+
+  fn part2 (directions: Array[Direction], graph: Map[String, (String, String)]) {
+    let mut i = 0
+    let mut nodes = graph
+      .keys
+      .select fn(node) { node.ends_with?("A") }
+      .map fn(node) { node.clone }
+      .to_array
+
+    let mut seen = nodes
+      .iter
+      .map fn(node) { set_from_value((node, 0)) }
+      .to_array
+
+    let mut seen_indices: Array[Option[Int]] = nodes.iter().map fn(_) { Option.None }.to_array
+
+    while nodes.iter.all?(fn(node) { node.ends_with?("Z") }).false? {
+      let di = i % directions.size
+      let direction = directions.get(di)
+
+      # TODO: can't get nodes.iter_mut.each to work :(
+      let mut j = 0
+      while j < nodes.size {
+        let node = nodes.get(j)
+        let thing = graph.get(node)
+        nodes.set(j, match directions.get(i % directions.size) {
+          case Left -> thing.0
+          case Right -> thing.1
+        })
+        j += 1
+      }
+
+      let mut j = 0
+      while j < nodes.size {
+        let node = nodes.get(j)
+        if seen_indices.get(j).some? {
+          # continue
+        } else {
+          let mut node_set = seen.get_mut(j)
+          if node_set.insert((node, di)).false? {
+            match seen_indices.get(j) {
+              case None -> {
+                seen_indices.set(j, Option.Some(i))
+              }
+              case _ -> {}
+            }
+          }
+        }
+
+        j += 1
+      }
+
+      if seen_indices.iter().all?(fn(opt) { opt.some? }) {
+        break
+      }
+
+      i += 1
+    }
+
+    let diffs = seen_indices
+      .into_iter
+      .map fn(opt) { opt.unwrap_or(i) }
+      .map fn(index) { index - (index % 263) }
+      .to_array
+
+    let part2 = diffs.into_iter.reduce(1, fn(acc, elm) { lcm(acc, elm) })
+    STDOUT.new.print("part2 = {part2}")
+  }
 }
 
+# TODO: generics?
 fn array_to_map (array: Array[(String, String, String)]) -> Map[String, (String, String)] {
   let mut map = Map.new
 
@@ -72,4 +145,21 @@ fn array_to_map (array: Array[(String, String, String)]) -> Map[String, (String,
   }
 
   map
+}
+
+fn set_from_value[T: Hash + Equal[ref T]](value: T) -> Set[T] {
+  let mut set = Set.new
+  set.insert(value)
+  set
+}
+
+fn lcm(a: Int, b: Int) -> Int {
+  (a * b) / gcd(a, b)
+}
+
+fn gcd(a: Int, b: Int) -> Int {
+  match b {
+    case 0 -> a
+    case _ -> gcd(b, a % b)
+  }
 }
