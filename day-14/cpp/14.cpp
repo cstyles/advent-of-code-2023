@@ -95,117 +95,81 @@ void debug(char* grid) {
 }
 
 void tilt_north(char* grid) {
-  while (true) {
-    bool rocks_moved = false;
+  for (int y = 0; y < DIMENSION; y++) {
+    for (int x = 0; x < DIMENSION; x++) {
+      char* tile = lookup(grid, y, x);
 
-    for (int y = 0; y < DIMENSION; y++) {
-      for (int x = 0; x < DIMENSION; x++) {
-        char* tile = lookup(grid, y, x);
-
-        if (*tile != 'O') {
-          continue;
-        }
-
-        if (y != 0) {
-          char* tile_above = lookup(grid, (y - 1), x);
-          if (*tile_above == '.') {
-            *tile_above = 'O';
-            *tile = '.';
-            rocks_moved = true;
-          }
-        }
+      if (*tile != 'O') {
+        continue;
       }
-    }
 
-    if (!rocks_moved) {
-      break;
+      int final_y = y;
+      while (final_y > 0 && *lookup(grid, (final_y - 1), x) == '.') {
+        final_y -= 1;
+      }
+
+      *lookup(grid, y, x) = '.';
+      *lookup(grid, final_y, x) = 'O';
     }
   }
 }
 
 void tilt_south(char* grid) {
-  while (true) {
-    bool rocks_moved = false;
+  for (int y = DIMENSION - 1; y >= 0; y--) {
+    for (int x = 0; x < DIMENSION; x++) {
+      char* tile = lookup(grid, y, x);
 
-    for (int y = 0; y < DIMENSION; y++) {
-      for (int x = 0; x < DIMENSION; x++) {
-        char* tile = lookup(grid, y, x);
-
-        if (*tile != 'O') {
-          continue;
-        }
-
-        if (y < DIMENSION - 1) {
-          char* tile_below = lookup(grid, (y + 1), x);
-          if (*tile_below == '.') {
-            *tile_below = 'O';
-            *tile = '.';
-            rocks_moved = true;
-          }
-        }
+      if (*tile != 'O') {
+        continue;
       }
-    }
 
-    if (!rocks_moved) {
-      break;
+      int final_y = y;
+      while (final_y < DIMENSION - 1 && *lookup(grid, (final_y + 1), x) == '.') {
+        final_y += 1;
+      }
+
+      *lookup(grid, y, x) = '.';
+      *lookup(grid, final_y, x) = 'O';
     }
   }
 }
 
 void tilt_east(char* grid) {
-  while (true) {
-    bool rocks_moved = false;
+  for (int y = 0; y < DIMENSION; y++) {
+    for (int x = DIMENSION - 1; x >= 0; x--) {
+      char* tile = lookup(grid, y, x);
 
-    for (int x = 0; x < DIMENSION; x++) {
-      for (int y = 0; y < DIMENSION; y++) {
-        char* tile = lookup(grid, y, x);
-
-        if (*tile != 'O') {
-          continue;
-        }
-
-        if (x < DIMENSION - 1) {
-          char* right_tile = lookup(grid, y, (x + 1));
-          if (*right_tile == '.') {
-            *right_tile = 'O';
-            *tile = '.';
-            rocks_moved = true;
-          }
-        }
+      if (*tile != 'O') {
+        continue;
       }
-    }
 
-    if (!rocks_moved) {
-      break;
+      int final_x = x;
+      while (final_x < DIMENSION - 1 && *lookup(grid, y, final_x + 1) == '.') {
+        final_x += 1;
+      }
+
+      *lookup(grid, y, x) = '.';
+      *lookup(grid, y, final_x) = 'O';
     }
   }
 }
 
 void tilt_west(char* grid) {
-  while (true) {
-    bool rocks_moved = false;
-
+  for (int y = 0; y < DIMENSION; y++) {
     for (int x = 0; x < DIMENSION; x++) {
-      for (int y = 0; y < DIMENSION; y++) {
-        char* tile = lookup(grid, y, x);
+      char* tile = lookup(grid, y, x);
 
-        if (*tile != 'O') {
-          continue;
-        }
-
-        if (x != 0) {
-          char* left_tile = lookup(grid, y, (x - 1));
-          if (*left_tile == '.') {
-            *left_tile = 'O';
-            *tile = '.';
-            rocks_moved = true;
-          }
-        }
+      if (*tile != 'O') {
+        continue;
       }
-    }
 
-    if (!rocks_moved) {
-      break;
+      int final_x = x;
+      while (final_x > 0 && *lookup(grid, y, final_x - 1) == '.') {
+        final_x -= 1;
+      }
+
+      *lookup(grid, y, x) = '.';
+      *lookup(grid, y, final_x) = 'O';
     }
   }
 }

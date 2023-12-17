@@ -17,7 +17,7 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 11  | [Fennel](day-11/fennel/11.fnl)             | 369          | [Solution](day-11/rust/src/main.rs) | 2.4               |
 | 12  | [F#](day-12/fsharp/Day12.fsx)              | 5,834        | [Solution](day-12/rust/src/main.rs) | 533               |
 | 13  | [Swift](day-13/swift/13.swift)             | 18.2         | [Solution](day-13/rust/src/main.rs) | 2.0               |
-| 14  | [C++](day-14/cpp/14.cpp)                   | 274          | [Solution](day-14/rust/src/main.rs) | 368               |
+| 14  | [C++](day-14/cpp/14.cpp)                   | 21.6         | [Solution](day-14/rust/src/main.rs) | 32.3              |
 | 15  | [C](day-15/c/15.c)                         | 0.8          | [Solution](day-15/rust/src/main.rs) | 1.4               |
 | 16  | [Rune](day-16/rune/16.rn)                  | 5,440        | [Solution](day-16/rust/src/main.rs) | 24                |
 | 17  | TODO                                       | TODO         | [Solution](day-17/rust/src/main.rs) | 331               |

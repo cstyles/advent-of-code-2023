@@ -29,117 +29,93 @@ impl Tile {
 type Grid = Vec<Vec<Tile>>;
 
 fn tilt_north(grid: &mut Grid) {
-    loop {
-        let mut rocks_moved = false;
+    for y in 0..grid.len() {
+        for x in 0..grid[0].len() {
+            let tile = grid[y][x];
 
-        for y in 0..grid.len() {
-            for x in 0..grid[0].len() {
-                let tile = grid[y][x];
+            if tile != Tile::Round {
+                continue;
+            };
 
-                if tile != Tile::Round {
-                    continue;
-                };
-
-                if let Some(tile_above) = y
-                    .checked_sub(1)
-                    .map(|y| &mut grid[y][x])
-                    .filter(|tile| **tile == Tile::Empty)
-                {
-                    *tile_above = Tile::Round;
-                    grid[y][x] = Tile::Empty;
-                    rocks_moved = true;
-                };
+            let mut final_y = y;
+            while final_y
+                .checked_sub(1)
+                .is_some_and(|y| grid[y][x] == Tile::Empty)
+            {
+                final_y -= 1;
             }
-        }
 
-        if !rocks_moved {
-            break;
+            grid[y][x] = Tile::Empty;
+            grid[final_y][x] = Tile::Round;
         }
     }
 }
 
 fn tilt_south(grid: &mut Grid) {
-    loop {
-        let mut rocks_moved = false;
+    for y in (0..grid.len()).rev() {
+        for x in 0..grid[0].len() {
+            let tile = grid[y][x];
 
-        for y in (0..grid.len()).rev() {
-            for x in (0..grid[0].len()).rev() {
-                let tile = grid[y][x];
+            if tile != Tile::Round {
+                continue;
+            };
 
-                if tile != Tile::Round {
-                    continue;
-                };
-
-                if let Some(tile_below) = grid
-                    .get_mut(y + 1)
-                    .map(|row| &mut row[x])
-                    .filter(|tile| **tile == Tile::Empty)
-                {
-                    *tile_below = Tile::Round;
-                    grid[y][x] = Tile::Empty;
-                    rocks_moved = true;
-                }
+            let mut final_y = y;
+            while grid
+                .get(final_y + 1)
+                .is_some_and(|row| row[x] == Tile::Empty)
+            {
+                final_y += 1;
             }
-        }
 
-        if !rocks_moved {
-            break;
+            grid[y][x] = Tile::Empty;
+            grid[final_y][x] = Tile::Round;
         }
     }
 }
 
 fn tilt_west(grid: &mut Grid) {
-    loop {
-        let mut rocks_moved = false;
-
+    for y in 0..grid.len() {
         for x in 0..grid[0].len() {
-            for row in grid.iter_mut() {
-                let tile = row[x];
+            let tile = grid[y][x];
 
-                if tile != Tile::Round {
-                    continue;
-                };
+            if tile != Tile::Round {
+                continue;
+            };
 
-                if let Some(left_tile) = x
-                    .checked_sub(1)
-                    .map(|x| &mut row[x])
-                    .filter(|tile| **tile == Tile::Empty)
-                {
-                    *left_tile = Tile::Round;
-                    row[x] = Tile::Empty;
-                    rocks_moved = true;
-                }
+            let mut final_x = x;
+            while final_x
+                .checked_sub(1)
+                .is_some_and(|x| grid[y][x] == Tile::Empty)
+            {
+                final_x -= 1;
             }
-        }
 
-        if !rocks_moved {
-            break;
+            grid[y][x] = Tile::Empty;
+            grid[y][final_x] = Tile::Round;
         }
     }
 }
 
 fn tilt_east(grid: &mut Grid) {
-    loop {
-        let mut rocks_moved = false;
+    for y in 0..grid.len() {
+        for x in (0..grid[0].len()).rev() {
+            let tile = grid[y][x];
 
-        for x in 0..grid[0].len() {
-            for row in grid.iter_mut() {
-                let tile = row[x];
+            if tile != Tile::Round {
+                continue;
+            };
 
-                if tile != Tile::Round {
-                    continue;
-                };
-
-                if let Some(right_tile) = row.get_mut(x + 1).filter(|tile| **tile == Tile::Empty) {
-                    *right_tile = Tile::Round;
-                    row[x] = Tile::Empty;
-                    rocks_moved = true;
-                }
+            let mut final_x = x;
+            while grid[y]
+                .get(final_x + 1)
+                .is_some_and(|tile| *tile == Tile::Empty)
+            {
+                final_x += 1;
             }
-        }
 
-        if !rocks_moved {
-            break;
+            grid[y][x] = Tile::Empty;
+            grid[y][final_x] = Tile::Round;
         }
     }
 }
@@ -193,7 +169,7 @@ fn main() {
         tilt_east(&mut grid);
     }
 
-    println!("part1 = {}", load(grid));
+    println!("part2 = {}", load(grid));
 }
 
 #[allow(dead_code)]
