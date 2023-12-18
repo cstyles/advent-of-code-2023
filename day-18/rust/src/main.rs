@@ -18,6 +18,16 @@ impl Direction {
             _ => unreachable!("bad input: {c}"),
         }
     }
+
+    fn from_hex(c: char) -> Self {
+        match c {
+            '0' => Self::Right,
+            '1' => Self::Down,
+            '2' => Self::Left,
+            '3' => Self::Up,
+            _ => unreachable!("bad input: {c}"),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -56,6 +66,30 @@ impl Instruction {
                 Some(point)
             }
         })
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+struct RealInstruction {
+    direction: Direction,
+    magnitude: u32,
+}
+
+impl RealInstruction {
+    fn parse(line: &str) -> Self {
+        let (_, hex) = line.split_once('#').unwrap();
+        let hex = &hex[..hex.len() - 1];
+
+        let direction = hex.chars().last().unwrap();
+        let direction = Direction::from_hex(direction);
+
+        let magnitude = &hex[..5];
+        let magnitude = u32::from_str_radix(magnitude, 16).unwrap();
+
+        Self {
+            direction,
+            magnitude,
+        }
     }
 }
 
@@ -104,12 +138,50 @@ impl Point {
     }
 
     fn neighbors(&self) -> [Self; 4] {
-        [
-            self.up(),
-            self.down(),
-            self.left(),
-            self.right(),
-        ]
+        [self.up(), self.down(), self.left(), self.right()]
+    }
+
+    // TODO: remove me
+    fn move_by1(&self, instruction: Instruction) -> Self {
+        match instruction.direction {
+            Direction::Up => Self {
+                y: self.y - instruction.magnitude as isize,
+                ..*self
+            },
+            Direction::Down => Self {
+                y: self.y + instruction.magnitude as isize,
+                ..*self
+            },
+            Direction::Left => Self {
+                x: self.x - instruction.magnitude as isize,
+                ..*self
+            },
+            Direction::Right => Self {
+                x: self.x + instruction.magnitude as isize,
+                ..*self
+            },
+        }
+    }
+
+    fn move_by(&self, instruction: RealInstruction) -> Self {
+        match instruction.direction {
+            Direction::Up => Self {
+                y: self.y - instruction.magnitude as isize,
+                ..*self
+            },
+            Direction::Down => Self {
+                y: self.y + instruction.magnitude as isize,
+                ..*self
+            },
+            Direction::Left => Self {
+                x: self.x - instruction.magnitude as isize,
+                ..*self
+            },
+            Direction::Right => Self {
+                x: self.x + instruction.magnitude as isize,
+                ..*self
+            },
+        }
     }
 }
 
@@ -125,6 +197,11 @@ fn main() {
     // let input = include_str!("../../test_input.txt");
     let input = include_str!("../../input.txt");
 
+    part1(input);
+    part2(input);
+}
+
+fn part1(input: &str) {
     let instructions: Vec<Instruction> = input.lines().map(Instruction::parse).collect();
 
     let mut point = Point { y: 0, x: 0 };
@@ -157,20 +234,32 @@ fn main() {
     println!("part1 = {part1}");
 }
 
-// fn debug(map: &Map) {
-//     let min_y = map.keys().map(|p| p.y).min().unwrap();
-//     let min_x = map.keys().map(|p| p.x).min().unwrap();
+fn part2(input: &str) {
+    // let instructions: Vec<Instruction> = input.lines().map(Instruction::parse).collect();
+    let instructions: Vec<RealInstruction> = input.lines().map(RealInstruction::parse).collect();
 
-//     let shifted: Map = map
-//         .iter()
-//         .map(|(point, tile)| {
-//             (
-//                 Point {
-//                     y: point.y - min_y,
-//                     x: point.x - min_x,
-//                 },
-//                 *tile,
-//             )
-//         })
-//         .collect();
-// }
+    let mut point = Point { y: 0, x: 0};
+    let mut vertices = vec![point];
+    let mut perimeter = 0;
+
+    for instruction in instructions {
+        // point = point.move_by1(instruction);
+        point = point.move_by(instruction);
+        vertices.push(point);
+        perimeter += instruction.magnitude;
+    }
+
+    // dbg!(&vertices);
+
+    let mut area = 0;
+    for points in vertices.windows(2) {
+        let [a, b] = points else { panic!() };
+
+        area += (a.y + b.y) * (a.x - b.x);
+        // area += (a.x * b.y) - (b.x * a.y);
+    }
+
+    // 48020794727661 = too low
+    let part2 = area as u64 / 2 + perimeter as u64 / 2 + 1;
+    println!("part2 = {part2}");
+}
