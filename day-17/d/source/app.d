@@ -1,13 +1,9 @@
-import std.array;
 import std.stdio;
 import std.file;
 import std.range;
 import std.string;
-import std.utf;
 import std.typecons;
-
 import std.algorithm.iteration;
-import std.typecons;
 import std.container.binaryheap;
 
 void main()
@@ -20,8 +16,11 @@ void main()
 		.map!(line => line.map!(c => c - '0').array)
 		.array;
 
-	solve!(false)(grid).writeln;
-	solve!(true)(grid).writeln;
+	uint part1 = solve!(false)(grid);
+	uint part2 = solve!(true)(grid);
+
+	writefln("part1 = %s", part1);
+	writefln("part2 = %s", part2);
 }
 
 uint solve(bool part_two)(immutable uint[][] grid)
@@ -42,7 +41,6 @@ uint solve(bool part_two)(immutable uint[][] grid)
 	HeapItem start = HeapItem(Point(0, 0), Direction.Right, moves_remaining, 0);
 
 	immutable Point destination = Point(height - 1, width - 1);
-	uint best_so_far = uint.max;
 	int[MapKey] shortest_distances;
 
 	// Min-heap
@@ -60,20 +58,15 @@ uint solve(bool part_two)(immutable uint[][] grid)
 		auto heap_item = heap.front;
 		heap.popFront;
 
-		if (heap_item.total_distance > best_so_far)
-		{
-			continue;
-		}
-
 		if (heap_item.point == destination && (!part_two || heap_item.moves_remaining <= 6))
 		{
 			return heap_item.total_distance;
 		}
 
-		auto for_map = heap_item.for_map;
+		immutable MapKey for_map = heap_item.for_map;
 		if (for_map in shortest_distances)
 		{
-			auto in_map = shortest_distances[for_map];
+			immutable auto in_map = shortest_distances[for_map];
 			if (heap_item.total_distance >= in_map)
 			{
 				continue;
@@ -88,15 +81,14 @@ uint solve(bool part_two)(immutable uint[][] grid)
 			shortest_distances[for_map] = heap_item.total_distance;
 		}
 
-		HeapItem[] next = heap_item.possible_moves!(part_two)(grid);
-		foreach (HeapItem next_item; next)
+		HeapItem[] possible_moves = heap_item.possible_moves!(part_two)(grid);
+		foreach (immutable HeapItem next_item; possible_moves)
 		{
-			/* next_item.writeln; */
 			heap.insert(next_item);
 		}
 	}
 
-	return 0; // TODO
+	assert(0, "didn't reach the destination :(");
 }
 
 struct Point
@@ -171,7 +163,7 @@ struct Point
 		case Direction.Right:
 			return this.right(grid[0].length);
 		default:
-			return Nullable!Point.init;
+			assert(0, "unreachable");
 		}
 	}
 
@@ -203,7 +195,7 @@ struct HeapItem
 
 	int opCmp(const HeapItem other) const
 	{
-		int td_cmp = this.total_distance.cmp(other.total_distance);
+		immutable int td_cmp = this.total_distance.cmp(other.total_distance);
 		if (td_cmp == 0)
 		{
 			return this.moves_remaining.cmp(other.moves_remaining);
@@ -220,7 +212,7 @@ struct HeapItem
 
 		if (part_two && this.moves_remaining > 6)
 		{
-			Nullable!Point new_point = this.point.in_direction(this.direction, grid);
+			immutable Nullable!Point new_point = this.point.in_direction(this.direction, grid);
 			if (!new_point.isNull)
 			{
 				Point actual_point = new_point.get;
@@ -247,10 +239,10 @@ struct HeapItem
 			directions = [Direction.Up, Direction.Down, Direction.Right];
 			break;
 		default:
-			return []; // unreachable
+			assert(0, "unreachable");
 		}
 
-		foreach (Direction direction; directions)
+		foreach (immutable Direction direction; directions)
 		{
 			if (direction == this.direction)
 			{
@@ -260,7 +252,7 @@ struct HeapItem
 				}
 				else
 				{
-					Nullable!Point new_point = this.point.in_direction(direction, grid);
+					immutable Nullable!Point new_point = this.point.in_direction(direction, grid);
 					if (!new_point.isNull)
 					{
 						Point actual_point = new_point.get;
@@ -272,21 +264,21 @@ struct HeapItem
 			}
 			else
 			{
-				uint moves_remaining;
+				uint new_moves_remaining;
 				if (part_two)
 				{
-					moves_remaining = 9;
+					new_moves_remaining = 9;
 				}
 				else
 				{
-					moves_remaining = 2;
+					new_moves_remaining = 2;
 				}
 
-				Nullable!Point new_point = this.point.in_direction(direction, grid);
+				immutable Nullable!Point new_point = this.point.in_direction(direction, grid);
 				if (!new_point.isNull)
 				{
-					Point point = new_point.get;
-					moves ~= HeapItem(point, direction, moves_remaining, this.total_distance + point.lookup(
+					Point actual_point = new_point.get;
+					moves ~= HeapItem(actual_point, direction, new_moves_remaining, this.total_distance + actual_point.lookup(
 							grid));
 				}
 			}
@@ -300,16 +292,5 @@ alias MapKey = Tuple!(Point, "point", Direction, "direction", uint, "moves_remai
 
 int cmp(uint a, uint b)
 {
-	if (a > b)
-	{
-		return 1;
-	}
-	else if (a < b)
-	{
-		return -1;
-	}
-	else
-	{
-		return 0;
-	}
+	return a - b;
 }
