@@ -20,9 +20,8 @@ void main()
 		.map!(line => line.map!(c => c - '0').array)
 		.array;
 
-	/* writeln(grid); */
-
 	solve!(false)(grid).writeln;
+	solve!(true)(grid).writeln;
 }
 
 uint solve(bool part_two)(immutable uint[][] grid)
@@ -49,7 +48,12 @@ uint solve(bool part_two)(immutable uint[][] grid)
 	// Min-heap
 	auto heap = heapify!"a > b"([start]);
 
-	// TODO: part_two => insert down start
+	if (part_two)
+	{
+		HeapItem start_down = start;
+		start_down.moves_remaining = 0;
+		heap.insert(start_down);
+	}
 
 	while (!heap.empty)
 	{
@@ -61,10 +65,8 @@ uint solve(bool part_two)(immutable uint[][] grid)
 			continue;
 		}
 
-		// TODO: part 2: check moves_remaining
-		if (heap_item.point == destination)
+		if (heap_item.point == destination && (!part_two || heap_item.moves_remaining <= 6))
 		{
-			// TODO: set best_so_far
 			return heap_item.total_distance;
 		}
 
@@ -87,11 +89,11 @@ uint solve(bool part_two)(immutable uint[][] grid)
 		}
 
 		HeapItem[] next = heap_item.possible_moves!(part_two)(grid);
-		foreach (HeapItem next_item; next) {
+		foreach (HeapItem next_item; next)
+		{
+			/* next_item.writeln; */
 			heap.insert(next_item);
 		}
-
-		// TODO: possible_moves
 	}
 
 	return 0; // TODO
@@ -214,9 +216,20 @@ struct HeapItem
 
 	HeapItem[] possible_moves(bool part_two)(immutable uint[][] grid)
 	{
-		// TODO: part2 and moves_remaining
-
 		HeapItem[] moves = [];
+
+		if (part_two && this.moves_remaining > 6)
+		{
+			Nullable!Point new_point = this.point.in_direction(this.direction, grid);
+			if (!new_point.isNull)
+			{
+				Point actual_point = new_point.get;
+				moves ~= HeapItem(actual_point, direction, this.moves_remaining - 1, this.total_distance + actual_point.lookup(
+						grid));
+			}
+
+			return moves;
+		}
 
 		Direction[] directions;
 		switch (this.direction)
@@ -250,20 +263,30 @@ struct HeapItem
 					Nullable!Point new_point = this.point.in_direction(direction, grid);
 					if (!new_point.isNull)
 					{
-						Point point = new_point.get;
-						moves ~= HeapItem(point, direction, this.moves_remaining - 1, this.total_distance + point.lookup(
-								grid));
+						Point actual_point = new_point.get;
+						moves ~= HeapItem(actual_point, direction, this.moves_remaining - 1, this.total_distance + actual_point
+								.lookup(
+									grid));
 					}
 				}
 			}
 			else
 			{
-				// TODO: part 2 moves_remaining
+				uint moves_remaining;
+				if (part_two)
+				{
+					moves_remaining = 9;
+				}
+				else
+				{
+					moves_remaining = 2;
+				}
+
 				Nullable!Point new_point = this.point.in_direction(direction, grid);
 				if (!new_point.isNull)
 				{
 					Point point = new_point.get;
-					moves ~= HeapItem(point, direction, 2, this.total_distance + point.lookup(
+					moves ~= HeapItem(point, direction, moves_remaining, this.total_distance + point.lookup(
 							grid));
 				}
 			}
