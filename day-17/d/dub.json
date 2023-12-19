@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Collin Styles"
+	],
+	"copyright": "Copyright © 2023, Collin Styles",
+	"description": "Advent of Code 2023 Day 17",
+	"license": "MIT",
+	"name": "day17"
+}
