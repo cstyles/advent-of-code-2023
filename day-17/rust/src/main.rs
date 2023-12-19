@@ -39,7 +39,6 @@ fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
         x: grid[0].len() as u8 - 1,
     };
 
-    let mut best_so_far = u32::MAX;
     let mut shortest_distances: HashMap<(Point, Direction, u8), u32> = [].into();
     let mut heap: BinaryHeap<HeapItem> = [start].into();
 
@@ -52,12 +51,8 @@ fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
     }
 
     while let Some(heap_item) = heap.pop() {
-        if heap_item.total_distance >= best_so_far {
-            continue;
-        }
-
         if heap_item.point == destination && (!PART_TWO || heap_item.moves_remaining <= 6) {
-            best_so_far = best_so_far.min(heap_item.total_distance);
+            return heap_item.total_distance;
         }
 
         // TODO: entry API?
@@ -77,7 +72,7 @@ fn solve<const PART_TWO: bool>(grid: &Grid) -> u32 {
         heap.extend(heap_item.possible_moves::<PART_TWO>(grid));
     }
 
-    best_so_far
+    unreachable!("never reached the destination :(");
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
