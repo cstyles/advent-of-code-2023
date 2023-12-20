@@ -28,15 +28,17 @@ parseCategory c =
     'a' -> A
     's' -> S
 
-type Operation = Int -> Int -> Bool
-
-instance Show Operation where
-  show (<) = show '<'
-  show (>) = show '>'
+data Operation = LessThan | GreaterThan deriving (Show)
 
 parseOperation :: Char -> Operation
-parseOperation '<' = (<)
-parseOperation '>' = (>)
+parseOperation '<' = LessThan
+parseOperation '>' = GreaterThan
+
+getOp :: Operation -> (Int -> Int -> Bool)
+getOp op =
+  case op of
+    LessThan -> (<)
+    GreaterThan -> (>)
 
 data Rule = Rule
   { category :: Category,
@@ -127,7 +129,7 @@ getCategory category part =
 ruleOutcome :: Rule -> Part -> Maybe Outcome
 ruleOutcome rule part =
   let partValue = getCategory (category rule) part
-   in if (operation rule) partValue (value rule)
+   in if (getOp $ operation rule) partValue (value rule)
         then Just (outcome rule)
         else Nothing
 
