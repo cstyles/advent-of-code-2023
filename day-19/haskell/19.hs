@@ -63,6 +63,18 @@ parseRule string =
                    in let outcome = parseOutcome outcome'
                        in Rule {category, operation, value, outcome}
 
+ruleConstraint :: Rule -> Range
+ruleConstraint rule =
+  case (operation rule) of
+    LessThan -> (0, value rule)
+    GreaterThan -> (value rule + 1, 4001)
+
+ruleReverseConstraint :: Rule -> Range
+ruleReverseConstraint rule =
+  case (operation rule) of
+    LessThan -> (value rule, 4001)
+    GreaterThan -> (0, value rule + 1)
+
 data Outcome = Accept | Reject | Redirect String deriving (Show)
 
 parseOutcome :: String -> Outcome
@@ -155,8 +167,67 @@ main = do
        in let parts = map parsePart parts'
            in do
                 print $ part1 workflows parts
+                print $ part2 workflows
 
 part1 :: [(String, Workflow)] -> [Part] -> Int
 part1 workflows parts =
   let inWorkflow = fromJust $ lookup "in" workflows
    in foldl' (\acc part -> if workflowAccepts inWorkflow workflows part then acc + partTotal part else acc) 0 parts
+
+part2 :: [(String, Workflow)] -> Int
+part2 workflows = attempt defaultConstraints workflows "in"
+
+attempt :: Constraints -> [(String, Workflow)] -> String -> Int
+attempt constraints workflows name =
+  let workflow = fromJust $ lookup name workflows
+   in let (finalConstraints, possible) =
+            foldl'
+              ( \(ughConstraints, accPossible) rule ->
+                  let newConstraints = merge ughConstraints (category rule) (ruleConstraint rule)
+                   in let subPossible =
+                            case (outcome rule) of
+                              Accept -> constraintsSize newConstraints
+                              Reject -> 0
+                              Redirect name' -> attempt newConstraints workflows name'
+                       in let almostTherePossible = accPossible + subPossible
+                           in (merge ughConstraints (category rule) (ruleReverseConstraint rule), almostTherePossible)
+              )
+              (constraints, 0)
+              (rules workflow)
+       in case (default_ workflow) of
+            Accept -> constraintsSize finalConstraints + possible
+            Reject -> possible
+            Redirect name' -> attempt finalConstraints workflows name' + possible
+
+type Range = (Int, Int)
+
+rangeLength :: Range -> Int
+rangeLength (a, b) =
+  if a >= b
+    then 0
+    else b - a
+
+rangeOverlap :: Range -> Range -> Range
+rangeOverlap a b = (max (fst a) (fst b), min (snd a) (snd b))
+
+data Constraints = Constraints
+  { xc :: Range,
+    mc :: Range,
+    ac :: Range,
+    sc :: Range
+  }
+  deriving (Show)
+
+defaultConstraints :: Constraints
+defaultConstraints = Constraints {xc = (1, 4001), mc = (1, 4001), ac = (1, 4001), sc = (1, 4001)}
+
+merge :: Constraints -> Category -> Range -> Constraints
+merge constraints category constraint =
+  case category of
+    X -> constraints {xc = rangeOverlap (xc constraints) constraint}
+    M -> constraints {mc = rangeOverlap (mc constraints) constraint}
+    A -> constraints {ac = rangeOverlap (ac constraints) constraint}
+    S -> constraints {sc = rangeOverlap (sc constraints) constraint}
+
+constraintsSize :: Constraints -> Int
+constraintsSize Constraints {xc, mc, ac, sc} = rangeLength xc * rangeLength mc * rangeLength ac * rangeLength sc
