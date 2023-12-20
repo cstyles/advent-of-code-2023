@@ -137,7 +137,7 @@ fn main() {
     let mut low_sent = 0;
     let mut high_sent = 0;
 
-    for button_press in 0..1_000 {
+    for button_press in 0.. {
         // Pressing the button also sends a Low pulse.
         low_sent += 1;
 
@@ -157,6 +157,10 @@ fn main() {
             pulse,
         }) = queue.pop_front()
         {
+            if ["ln", "db", "vq", "tf"].contains(&source) && pulse == Pulse::High {
+                println!("{source} sent {pulse:?} to {dest} at bp #{button_press}");
+            }
+
             // println!("{} sent {:?} to {}", source, pulse, dest);
             match pulse {
                 Pulse::High => high_sent += 1,
@@ -170,8 +174,8 @@ fn main() {
             if let Some(node) = nodes.get_mut(dest) {
                 let results = node.process(source, pulse);
                 queue.extend(results);
-            } else {
-                // println!("bad dest = {dest}");
+            } else if pulse == Pulse::Low {
+                println!("part2 = {}", button_press + 1);
             }
         }
     }
