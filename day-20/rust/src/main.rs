@@ -137,7 +137,10 @@ fn main() {
     let mut low_sent = 0;
     let mut high_sent = 0;
 
-    for button_press in 0.. {
+    let mut precursors: HashMap<&str, Option<u64>> =
+        [("tf", None), ("db", None), ("vq", None), ("ln", None)].into();
+
+    for button_press in 1.. {
         // Pressing the button also sends a Low pulse.
         low_sent += 1;
 
@@ -157,11 +160,21 @@ fn main() {
             pulse,
         }) = queue.pop_front()
         {
-            if ["ln", "db", "vq", "tf"].contains(&source) && pulse == Pulse::High {
-                println!("{source} sent {pulse:?} to {dest} at bp #{button_press}");
+            // Check if we're sending a pulse to one of rx's precursors.
+            if pulse == Pulse::High {
+                if let Some(precursor) = precursors.get_mut(source) {
+                    precursor.get_or_insert(button_press);
+
+                    // If we've calculated the loop size for all precurors,
+                    // calculate their product (part 2) and exit.
+                    if precursors.values().all(Option::is_some) {
+                        let part2: u64 = precursors.into_values().map(|o| o.unwrap()).product();
+                        println!("part2 = {part2}");
+                        std::process::exit(0);
+                    }
+                }
             }
 
-            // println!("{} sent {:?} to {}", source, pulse, dest);
             match pulse {
                 Pulse::High => high_sent += 1,
                 Pulse::Low => low_sent += 1,
@@ -178,8 +191,10 @@ fn main() {
                 println!("part2 = {}", button_press + 1);
             }
         }
-    }
 
-    let part1 = dbg!(low_sent) * dbg!(high_sent);
-    println!("part1 = {part1}");
+        if button_press == 1000 {
+            let part1 = low_sent * high_sent;
+            println!("part1 = {part1}");
+        }
+    }
 }
