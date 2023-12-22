@@ -54,13 +54,8 @@ fn range_overlap(a: &Range<usize>, b: &Range<usize>) -> Range<usize> {
     a.start.max(b.start)..a.end.min(b.end)
 }
 
-fn main() {
-    // let input = include_str!("../../test_input.txt");
-    let input = include_str!("../../input.txt");
-
-    let mut bricks: Vec<Brick> = input.lines().map(Brick::parse).collect();
-    bricks.sort_by_key(|brick| brick.z.start);
-    // dbg!(&bricks);
+fn drop(bricks: &mut Vec<Brick>) -> usize {
+    let mut which_bricks_moved = HashSet::new();
 
     for i in 0..bricks.len() {
         loop {
@@ -74,14 +69,32 @@ fn main() {
                 break;
             } else {
                 bricks[i] = this.down();
+                which_bricks_moved.insert(i);
             }
         }
     }
 
+    which_bricks_moved.len()
+}
+
+fn main() {
+    // let input = include_str!("../../test_input.txt");
+    let input = include_str!("../../input.txt");
+
+    let mut bricks: Vec<Brick> = input.lines().map(Brick::parse).collect();
+    bricks.sort_by_key(|brick| brick.z.start);
     // dbg!(&bricks);
 
+    drop(&mut bricks);
+
+    let mut ugh = bricks.clone();
+    ugh.sort_by_key(|brick| brick.z.start);
+    for brick in ugh {
+        println!("{brick:?}");
+    }
+
     // Maps a brick to all the bricks supporting it
-    let mut supports: HashMap<usize, Vec<usize>> = [].into();
+    let mut supports: HashMap<usize, HashSet<usize>> = [].into();
 
     for i in (0..bricks.len()).rev() {
         let this = &bricks[i];
@@ -90,7 +103,7 @@ fn main() {
 
         for (j, other) in bricks.iter().take(i).enumerate() {
             if down.intersects(other) {
-                entry.push(j);
+                entry.insert(j);
             }
         }
     }
@@ -98,11 +111,64 @@ fn main() {
     // dbg!(&supports);
 
     let cant_disintegrate: HashSet<usize> = supports
-        .into_values()
+        .values()
         .filter(|v| v.len() == 1)
         .flatten()
+        .copied()
         .collect();
+
+    // Maps a brick to all the bricks that it supports
+    // let mut supporting: HashMap<usize, Vec<usize>> = [].into();
+
+    // for i in 0..bricks.len() {
+    //     let this = &bricks[i];
+    //     if this.z.contains(&1) {
+    //         continue;
+    //     }
+
+    //     let down = this.down();
+    //     let entry = supporting.entry(i).or_default();
+
+    //     for (j, other) in bricks.iter().take(i).enumerate() {
+    //         if down.intersects(other) {
+    //             entry.push(j);
+    //         }
+    //     }
+    // }
 
     let part1 = bricks.len() - cant_disintegrate.len();
     println!("part1 = {part1}");
+
+    let mut total = 0;
+    for candidate in cant_disintegrate {
+        let mut bricks = bricks.clone();
+        bricks.remove(candidate);
+        total += drop(&mut bricks);
+    }
+
+    println!("total = {total}");
+
+    // let mut total = 0;
+    // for candidate in cant_disintegrate.iter() {
+    //     // let this = &bricks[*candidate];
+    //     let mut supports = supports.clone();
+    //     let mut disintegrated: HashSet<usize> = [*candidate].into();
+
+    //     for other in candidate + 1..bricks.len() {
+    //         let supported_by = supports.get_mut(&other).unwrap();
+    //         let diff = supported_by.difference(&disintegrated).copied();
+    //         // *supported_by = diff.collect();
+
+    //         // if supported_by.is_empty() {
+    //         if diff.count() == 0 {
+    //             // println!("dis {candidate} causes {other} to dis");
+    //             disintegrated.insert(other);
+    //         }
+    //     }
+
+    //     total += disintegrated.len() - 1;
+    // }
+
+    // 76039 = too high
+    // println!("part2 = {total}");
 }
