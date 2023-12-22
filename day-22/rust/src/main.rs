@@ -54,8 +54,14 @@ fn range_overlap(a: &Range<usize>, b: &Range<usize>) -> Range<usize> {
     a.start.max(b.start)..a.end.min(b.end)
 }
 
-fn drop(bricks: &mut Vec<Brick>) -> usize {
-    let mut which_bricks_moved = HashSet::new();
+fn main() {
+    // let input = include_str!("../../test_input.txt");
+    let input = include_str!("../../input.txt");
+
+    let mut bricks: Vec<Brick> = input.lines().map(Brick::parse).collect();
+    bricks.sort_by_key(|brick| brick.z.start);
+
+    let bricks: &mut Vec<Brick> = &mut bricks;
 
     for i in 0..bricks.len() {
         loop {
@@ -68,29 +74,9 @@ fn drop(bricks: &mut Vec<Brick>) -> usize {
             if bricks.iter().take(i).any(|brick| brick.intersects(&down)) {
                 break;
             } else {
-                bricks[i] = this.down();
-                which_bricks_moved.insert(i);
+                bricks[i] = down;
             }
         }
-    }
-
-    which_bricks_moved.len()
-}
-
-fn main() {
-    // let input = include_str!("../../test_input.txt");
-    let input = include_str!("../../input.txt");
-
-    let mut bricks: Vec<Brick> = input.lines().map(Brick::parse).collect();
-    bricks.sort_by_key(|brick| brick.z.start);
-    // dbg!(&bricks);
-
-    drop(&mut bricks);
-
-    let mut ugh = bricks.clone();
-    ugh.sort_by_key(|brick| brick.z.start);
-    for brick in ugh {
-        println!("{brick:?}");
     }
 
     // Maps a brick to all the bricks supporting it
@@ -108,8 +94,6 @@ fn main() {
         }
     }
 
-    // dbg!(&supports);
-
     let cant_disintegrate: HashSet<usize> = supports
         .values()
         .filter(|v| v.len() == 1)
@@ -117,58 +101,31 @@ fn main() {
         .copied()
         .collect();
 
-    // Maps a brick to all the bricks that it supports
-    // let mut supporting: HashMap<usize, Vec<usize>> = [].into();
-
-    // for i in 0..bricks.len() {
-    //     let this = &bricks[i];
-    //     if this.z.contains(&1) {
-    //         continue;
-    //     }
-
-    //     let down = this.down();
-    //     let entry = supporting.entry(i).or_default();
-
-    //     for (j, other) in bricks.iter().take(i).enumerate() {
-    //         if down.intersects(other) {
-    //             entry.push(j);
-    //         }
-    //     }
-    // }
-
     let part1 = bricks.len() - cant_disintegrate.len();
     println!("part1 = {part1}");
 
-    let mut total = 0;
+    let mut part2 = 0;
     for candidate in cant_disintegrate {
-        let mut bricks = bricks.clone();
-        bricks.remove(candidate);
-        total += drop(&mut bricks);
+        let mut disintegrated: HashSet<usize> = [candidate].into();
+
+        for other in candidate + 1..bricks.len() {
+            let supported_by = supports.get(&other).unwrap();
+
+            // If this brick is already not supported by anything, it's a base
+            // block so we shouldn't count it as being disintegrated.
+            if supported_by.is_empty() {
+                continue;
+            }
+
+            let diff = supported_by.difference(&disintegrated).copied();
+
+            if diff.count() == 0 {
+                disintegrated.insert(other);
+            }
+        }
+
+        part2 += disintegrated.len() - 1;
     }
 
-    println!("total = {total}");
-
-    // let mut total = 0;
-    // for candidate in cant_disintegrate.iter() {
-    //     // let this = &bricks[*candidate];
-    //     let mut supports = supports.clone();
-    //     let mut disintegrated: HashSet<usize> = [*candidate].into();
-
-    //     for other in candidate + 1..bricks.len() {
-    //         let supported_by = supports.get_mut(&other).unwrap();
-    //         let diff = supported_by.difference(&disintegrated).copied();
-    //         // *supported_by = diff.collect();
-
-    //         // if supported_by.is_empty() {
-    //         if diff.count() == 0 {
-    //             // println!("dis {candidate} causes {other} to dis");
-    //             disintegrated.insert(other);
-    //         }
-    //     }
-
-    //     total += disintegrated.len() - 1;
-    // }
-
-    // 76039 = too high
-    // println!("part2 = {total}");
+    println!("part2 = {part2}");
 }
