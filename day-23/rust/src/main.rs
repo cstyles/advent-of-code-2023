@@ -22,6 +22,17 @@ impl Tile {
             _ => unreachable!("bad input: {c}"),
         }
     }
+
+    fn as_char(self) -> char {
+        match self {
+            Self::Path => '.',
+            Self::Forest => '#',
+            Self::UpSlope => '^',
+            Self::DownSlope => 'v',
+            Self::LeftSlope => '<',
+            Self::RightSlope => '>',
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -72,15 +83,18 @@ impl Point {
     fn can_move_to(&self, other: &Self, grid: &Grid) -> bool {
         match (self.direction_to(other), other.lookup(grid)) {
             (_, Tile::Forest) => false,
-            (_, Tile::Path) => true,
-            (Direction::Up, Tile::UpSlope) => true,
-            (Direction::Up, _) => false,
-            (Direction::Down, Tile::DownSlope) => true,
-            (Direction::Down, _) => false,
-            (Direction::Left, Tile::LeftSlope) => true,
-            (Direction::Left, _) => false,
-            (Direction::Right, Tile::RightSlope) => true,
-            (Direction::Right, _) => false,
+            (
+                _,
+                Tile::Path | Tile::UpSlope | Tile::DownSlope | Tile::LeftSlope | Tile::RightSlope,
+            ) => true,
+            // (Direction::Up, Tile::UpSlope) => true,
+            // (Direction::Up, _) => false,
+            // (Direction::Down, Tile::DownSlope) => true,
+            // (Direction::Down, _) => false,
+            // (Direction::Left, Tile::LeftSlope) => true,
+            // (Direction::Left, _) => false,
+            // (Direction::Right, Tile::RightSlope) => true,
+            // (Direction::Right, _) => false,
         }
     }
 
@@ -120,6 +134,11 @@ fn main() {
         visited: [].into(),
     }];
 
+    let destination = Point {
+        y: grid.len() - 1,
+        x: grid[0].len() - 2,
+    };
+
     let mut part1 = 0;
     while let Some(StackItem { point, mut visited }) = stack.pop() {
         if !visited.insert(point) {
@@ -132,8 +151,14 @@ fn main() {
             .filter(|neighbor| !visited.contains(neighbor))
             .collect();
 
-        if targets.is_empty() {
-            part1 = part1.max(visited.len());
+        if targets.is_empty() && point == destination {
+            if visited.len() > part1 {
+                part1 = visited.len();
+                println!("{}", visited.len());
+                // debug(&grid, visited);
+                println!();
+            }
+            // part1 = part1.max(visited.len());
         } else if targets.len() == 1 {
             stack.push(StackItem {
                 point: targets[0],
@@ -151,9 +176,26 @@ fn main() {
 
     // let part1 = todo;
     println!("part1 = {part1}");
+
+    // 6202 = not right
 }
 
 struct StackItem {
     point: Point,
     visited: HashSet<Point>,
+}
+
+#[allow(dead_code)]
+fn debug(grid: &Grid, visited: HashSet<Point>) {
+    for (y, row) in grid.iter().enumerate() {
+        for (x, tile) in row.iter().enumerate() {
+            let point = Point { y, x };
+            if visited.contains(&point) {
+                print!("O");
+            } else {
+                print!("{}", tile.as_char());
+            }
+        }
+        println!();
+    }
 }
