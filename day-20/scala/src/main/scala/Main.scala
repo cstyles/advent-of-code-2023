@@ -106,7 +106,14 @@ case class Signal(
   var high_sent = 0
   var button_press = 0
 
-  while (button_press < 1000) { // TODO
+  val precursors = collection.mutable.Map[String, Option[Long]](
+    ("tf", None),
+    ("db", None),
+    ("vq", None),
+    ("ln", None)
+  )
+
+  while (true) {
     button_press += 1
     low_sent += 1
 
@@ -120,14 +127,22 @@ case class Signal(
     while (queue.nonEmpty) {
       val signal = queue.dequeue
 
-      // signal.pulse match
-      // case Pulse.High => {
-      // }
-      // case _ => ()
-
       signal.pulse match
-        case Pulse.High => high_sent += 1
-        case Pulse.Low  => low_sent += 1
+        case Pulse.High => {
+          high_sent += 1
+          precursors.get(signal.source) match
+            case Some(Some(_existing)) => ()
+            case Some(None) => precursors.put(signal.source, Some(button_press))
+            case _          => ()
+        }
+        case Pulse.Low => low_sent += 1
+
+      if precursors.values.forall(_.nonEmpty)
+      then {
+        val part2 = precursors.values.map(_.get).product
+        println(s"part2 = $part2")
+        System.exit(0)
+      } else ()
 
       if signal.dest == "output"
       then ()
