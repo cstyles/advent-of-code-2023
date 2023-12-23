@@ -80,6 +80,18 @@ class Brick {
   // }
 }
 
+const set_diff = (a: Set<number>, b: Set<number>): Set<number> => {
+  const diff: Set<number> = new Set();
+
+  for (const element of a) {
+    if (!b.has(element)) {
+      diff.add(element);
+    }
+  }
+
+  return diff;
+};
+
 // const input = await Deno.readTextFile("../test_input.txt");
 const input = await Deno.readTextFile("../input.txt");
 
@@ -135,3 +147,26 @@ for (const sups of supports.values()) {
 
 const part1 = bricks.length - cant_disintegrate.size;
 console.log(`part1 = ${part1}`);
+
+let part2 = 0;
+for (const candidate of cant_disintegrate) {
+  const disintegrated = new Set([candidate]);
+
+  for (let other = candidate + 1; other < bricks.length; other++) {
+    const supported_by = supports.get(other)!; // TODO: unwrap?
+
+    if (supported_by.size == 0) {
+      continue;
+    }
+
+    const diff = set_diff(supported_by, disintegrated);
+
+    if (diff.size == 0) {
+      disintegrated.add(other);
+    }
+  }
+
+  part2 += disintegrated.size - 1;
+}
+
+console.log(`part2 = ${part2}`);
