@@ -60,6 +60,24 @@
               0 HighCard
               (throw (Throwable. "not a valid hand"))))))
 
+(defn best_hand_type [hand]
+  (let [old_type (hand_type hand)
+        j_count (count (filter (partial = 1) (:cards hand)))]
+    (if (= 0 j_count)
+      old_type
+      (case old_type
+        10 FiveOfAKind ; FiveOfAKind
+        9 FiveOfAKind ; FourOfAKind
+        8 FiveOfAKind ; FullHouse
+        7 FourOfAKind ; ThreeOfAKind
+        6 (case j_count ; TwoPair
+            1 FullHouse
+            2 FourOfAKind
+            (throw (Throwable. "invalid hand" j_count)))
+        5 ThreeOfAKind ; OnePair
+        4 OnePair ; HighCard
+        (throw (Throwable. (str "invalid hand " old_type)))))))
+
 ; Returns the first element in a sequence that matches a predicate
 ; (or nil if no such element exists).
 (defn find-seq [f s] (first (filter f s)))
@@ -82,6 +100,19 @@
       (break_tie a b)
       compared_hands)))
 
+(defn weaken_j [cards]
+  (map (fn [card] (if (= 11 card) 1 card)) cards))
+
+(defn weaken_hand [hand]
+  (let [new_cards (weaken_j (:cards hand))]
+    (assoc hand :cards new_cards)))
+
+(defn compare_hands2 [a b]
+  (let [compared_hands (compare (best_hand_type a) (best_hand_type b))]
+    (if (= 0 compared_hands)
+      (break_tie a b)
+      compared_hands)))
+
 (defn answer [hands]
   (->>
    hands
@@ -90,3 +121,7 @@
 
 (let [sorted_hands (sort compare_hands1 hands)]
   (println "part1 =" (answer sorted_hands)))
+
+(let [weakened_hands (map weaken_hand hands)
+      sorted_hands (sort compare_hands2 weakened_hands)]
+  (println "part2 =" (answer sorted_hands)))
