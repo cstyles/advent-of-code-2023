@@ -10,7 +10,7 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 4   | [Koka]        | [04.kk](day-04/koka/04.kk)                            | 5.6          | [day-04](day-04/rust/src/main.rs)  | 1.0               |
 | 5   | [OCaml]       | [05.ml](day-05/ocaml/05.ml)                           | 2.5          | [day-05](day-05/rust/src/main.rs)  | 1.2               |
 | 6   | [Pen & Paper] | [06.jpg](day-06/pen-and-paper/06.jpg)                 | N/A          | [day-06](day-06/rust/src/main.rs)  | 0.8               |
-| 7   | —             | —                                                     | —            | [day-07](day-07/rust/src/main.rs)  | 118               |
+| 7   | —             | —                                                     | —            | [day-07](day-07/rust/src/main.rs)  | 7.3               |
 | 8   | [Inko]        | [08.inko](day-08/inko/08.inko)                        | 175          | [day-08](day-08/rust/src/main.rs)  | 13                |
 | 9   | [SML]         | [09.sml](day-09/sml/09.sml)                           | 17.3         | [day-09](day-09/rust/src/main.rs)  | 1.4               |
 | 10  | —             | —                                                     | —            | [day-10](day-10/rust/src/main.rs)  | 6.2               |
