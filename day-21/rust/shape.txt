@@ -1,0 +1,61 @@
+
+   -^-
+  /###\
+ -#####-
+ <#####>
+ -#####-
+  \###/
+   -v-
+
+><v^ are "caps"
+- are small diagonals
+/\ are big diagonals
+
+every subgrid along the diagonals has the same parity!
+but the caps aren't part of the diagonals
+
+     -^-
+    /###\
+   -#####\
+  /#######\
+ -#########-
+ <####S####>
+ -#########-
+  \#######/
+   -#####-
+    \###/
+     -v-
+
+     -#-
+    /###\
+   -#####\
+  /#######\
+ -#########-
+ #####S#####
+ -#########-
+  \#######/
+   -#####-
+    \###/
+     -#-
+
+This one is actually right:
+     -#-
+    -/#\-
+   -/###\-
+  -/#####\-
+ -/#######\-
+ #####S#####
+ -\#######/-
+  -\#####/-
+   -\###/-
+    -\#/-
+     -#-
+
+- => small diagonal
+/\ => big diagonal
+# => inner
+S => start
+
+# of small diagonals = dimension (202300)
+# of big diagonals = # of small diagonals - 1
+# of inner = idk just iterate outward in "rings" of alternating parity
