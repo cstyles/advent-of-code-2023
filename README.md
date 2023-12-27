@@ -13,7 +13,7 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 7   | [Clojure]     | [07.clj](day-07/clojure/07.clj)                       | 794          | [day-07](day-07/rust/src/main.rs)  | 7.3               |
 | 8   | [Inko]        | [08.inko](day-08/inko/08.inko)                        | 175          | [day-08](day-08/rust/src/main.rs)  | 13                |
 | 9   | [SML]         | [09.sml](day-09/sml/09.sml)                           | 17.3         | [day-09](day-09/rust/src/main.rs)  | 1.4               |
-| 10  | —             | —                                                     | —            | [day-10](day-10/rust/src/main.rs)  | 6.2               |
+| 10  | [Dart]        | [dart.dart](day-10/dart/bin/dart.dart)                | 43.4         | [day-10](day-10/rust/src/main.rs)  | 6.2               |
 | 11  | [Fennel]      | [11.fnl](day-11/fennel/11.fnl)                        | 369          | [day-11](day-11/rust/src/main.rs)  | 2.4               |
 | 12  | [F#]          | [Day12.fsx](day-12/fsharp/Day12.fsx)                  | 5,834        | [day-12](day-12/rust/src/main.rs)  | 533               |
 | 13  | [Swift]       | [13.swift](day-13/swift/13.swift)                     | 18.2         | [day-13](day-13/rust/src/main.rs)  | 2.0               |
@@ -41,6 +41,7 @@ All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
 [Clojure]: https://clojure.org/
 [Inko]: https://inko-lang.org/
 [SML]: https://en.wikipedia.org/wiki/Standard_ML
+[Dart]: https://dart.dev/
 [Fennel]: https://fennel-lang.org/
 [F#]: https://fsharp.org/
 [Swift]: https://www.swift.org/
