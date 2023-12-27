@@ -1,0 +1,69 @@
+p0 = (19 - 2t, 13 + t, 30 - 2t)
+p1 = (18 - t, 19 - t, 22 - 2t)
+
+if we adjust v0 & v1 by offsetting them according to the velocity of the stone
+they will both hit the stone's position, albeit at different times
+so adjust where xv/yv/zv = x velocity, etc.
+
+p0 = (19 - (2 + xv) * t1, 13 + yv * t1, 30 - (2 + zv) * t1)
+p1 = (18 - xv * t2, 19 - yv * t2, 22 - (2 * zv) * t2)
+
+ignoring the z-axis for the moment
+
+p0 = (19 - (2 + xv) * t1, 13 + yv * t1)
+p1 = (18 - xv * t2, 19 - yv * t2)
+
+solve one for t:
+p0x = 19 - (2 + xv) * t1
+19 - p0x = (2 + xv) * t1
+t1 = (19 - p0x) / (2 + xv)
+
+solve another:
+p1x = 18 - xv * t2
+18 - p1x = xv * t2
+t2 = (18 - p1x) / xv
+
+general form
+Tn = (hailstone_pos_x - ???) / (hailstone_vel_x - ???)
+p0x = rock_pos_x + t * rock_vel_x
+
+---- ^ disregard all that tommyrot ^ ----
+
+rock_pos_x + t * rock_vel_x = hailstone_pos_x + t * hailstone_vel_x
+rock_pos_x - hailstone_pos_x = t * (hailstone_vel_x - rock_vel_x)
+t = (rock_pos_x - hailstone_pos_x) / (hailstone_vel_x - rock_vel_x)
+
+// same thing for y:
+rock_pos_y + t * rock_vel_y = hailstone_pos_y + t * hailstone_vel_y
+rock_pos_y - hailstone_pos_y = t * (hailstone_vel_y - rock_vel_y)
+t = (rock_pos_y - hailstone_pos_y) / (hailstone_vel_y - rock_vel_y)
+
+// so combining:
+t = (rock_pos_x - hailstone_pos_x) / (hailstone_vel_x - rock_vel_x)
+t = (rock_pos_y - hailstone_pos_y) / (hailstone_vel_y - rock_vel_y)
+
+// we know hailstone_pos_x, hailstone_pos_y, hailstone_vel_x, hailstone_vel_y
+// and we can (maybe) brute force rock_vel_x and rock_vel_y
+// that just leaves rock_pos_x and rock_pos_y
+// let's do algebra:
+
+(rock_pos_x - hailstone_pos_x) / (hailstone_vel_x - rock_vel_x) = (rock_pos_y - hailstone_pos_y) / (hailstone_vel_y - rock_vel_y)
+(rock_pos_x - hailstone_pos_x) * (hailstone_vel_y - rock_vel_y) = (rock_pos_y - hailstone_pos_y) * (hailstone_vel_x - rock_vel_x)
+
+rock_pos_x * hailstone_vel_y - rock_pos_x * rock_vel_y - hailstone_pos_x * hailstone_vel_y + hailstone_pos_x * rock_vel_y
+    =
+rock_pos_y * hailstone_vel_x - rock_pos_y * rock_vel_x - hailstone_pos_y * hailstone_vel_x + hailstone_pos_y * rock_vel_x
+
+// Put all the rock stuff on the left (so only the right has terms pertaining to the hailstone):
+
+rock_pos_y * rock_vel_x - rock_pos_x * rock_vel_y
+    =
+rock_pos_y * hailstone_vel_x - hailstone_pos_y * hailstone_vel_x + hailstone_pos_y * rock_vel_x - rock_pos_x * hailstone_vel_y + hailstone_pos_x * hailstone_vel_y - hailstone_pos_x * rock_vel_y
+
+// Because the left side will be the same for all hailstones
+// we can generate the right side for multiple hailstones.
+// There are four unknowns (rock_pos_x, rock_pos_y, rock_vel_x, rock_vel_y)
+// So (I think) with four hailstones, we'll have enough equations
+// that solving the system of equations will yield values for all of those.
+// And then I guess we'll deal with Z later.
+

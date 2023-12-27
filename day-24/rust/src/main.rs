@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
 use std::ops::RangeInclusive;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -16,6 +17,10 @@ impl Point {
         let z = coords.next().unwrap().parse().unwrap();
 
         Self { z, y, x }
+    }
+
+    fn is_integer(&self) -> bool {
+        self.x.floor() == self.x && self.y.floor() == self.y
     }
 }
 
@@ -83,6 +88,15 @@ impl Hailstone {
                     z: 0.0, // TODO
                 })
             }
+        }
+    }
+
+    //
+    fn z_intersect(&self, other: &Self, y: f64, x: f64) -> Option<Point> {
+        if self.velocity == other.velocity {
+            None // parallel?
+        } else {
+            todo!()
         }
     }
 
@@ -181,7 +195,10 @@ impl Hailstone {
     }
 }
 
-fn find_xy_intersections(hailstones: &[Hailstone], range: RangeInclusive<f64>) -> (Vec<Point>, usize) {
+fn find_xy_intersections(
+    hailstones: &[Hailstone],
+    range: RangeInclusive<f64>,
+) -> (Vec<Point>, usize) {
     let mut intersections = vec![];
     let mut parallel = 0;
 
@@ -213,25 +230,25 @@ fn find_xy_intersections(hailstones: &[Hailstone], range: RangeInclusive<f64>) -
     (intersections, parallel)
 }
 
-fn find_xyz_intersections(hailstones: &[Hailstone], range: RangeInclusive<f64>) -> Vec<Point> {
-    let mut intersections = vec![];
+// fn find_xyz_intersections(hailstones: &[Hailstone], range: RangeInclusive<f64>) -> Vec<Point> {
+//     let mut intersections = vec![];
 
-    for (i, a) in hailstones.iter().enumerate() {
-        for b in hailstones.iter().skip(i + 1) {
-            if let Some(intersection) = a.xy_intersect(b) {
-                if range.contains(&intersection.x)
-                    && range.contains(&intersection.y)
-                    && a.is_in_future(intersection)
-                    && b.is_in_future(intersection)
-                {
-                    intersections.push(intersection);
-                }
-            }
-        }
-    }
+//     for (i, a) in hailstones.iter().enumerate() {
+//         for b in hailstones.iter().skip(i + 1) {
+//             if let Some(intersection) = a.xy_intersect(b) {
+//                 if range.contains(&intersection.x)
+//                     && range.contains(&intersection.y)
+//                     && a.is_in_future(intersection)
+//                     && b.is_in_future(intersection)
+//                 {
+//                     intersections.push(intersection);
+//                 }
+//             }
+//         }
+//     }
 
-    intersections
-}
+//     intersections
+// }
 
 fn main() {
     // let (input, range) = (include_str!("../../test_input.txt"), 7.0..=27.0);
@@ -242,8 +259,8 @@ fn main() {
 
     let hailstones: Vec<Hailstone> = input.lines().map(Hailstone::parse).collect();
 
-    // let part1 = find_xy_intersections(&hailstones, range.clone()).len();
-    // println!("part1 = {part1}");
+    let part1 = find_xy_intersections(&hailstones, range.clone()).0.len();
+    println!("part1 = {part1}");
 
     for hailstone in hailstones.iter() {
         // println!("# mx + b:");
@@ -279,36 +296,170 @@ fn main() {
     let mut max_matches = 0;
 
     // for z in -10..10 {
-    // for y in -5..5 {
-    //     for x in -5..5 {
-    for y in -250..250 {
-        for x in -250..250 {
-            let offset = Velocity {
-                x: f64::from(x),
-                y: f64::from(y),
-                // z: f64::from(z),
-                z: 0.0,
-            };
+    // for y in Spiral::default().take(100) {
+    // for x in Spiral::default().take(100) {
+    // for y in 0..50 {
+    //     for x in 150..350 {
+    //         let offset = Velocity {
+    //             x: f64::from(x),
+    //             y: f64::from(y),
+    //             // z: f64::from(z),
+    //             z: 0.0,
+    //         };
 
-            let hailstones: Vec<Hailstone> = hailstones
-                .iter()
-                .copied()
-                .map(|h| h.adjust_velocity(offset))
-                .collect();
+    //         let hailstones: Vec<Hailstone> = hailstones
+    //             .iter()
+    //             .copied()
+    //             .map(|h| h.adjust_velocity(offset))
+    //             .collect();
 
-            // solve system of equations
-            let (intersections, parallel) = find_xy_intersections(&hailstones, range.clone());
-            if intersections.len() + parallel == target {
-                println!("{offset:?} = {} ({parallel})", intersections.len());
-            }
+    //         let a = hailstones.get(0).copied().unwrap();
+    //         let b = hailstones.get(1).copied().unwrap();
+    //         let Some(collision) = a.xy_intersect(&b) else {
+    //             continue;
+    //         };
 
-            if intersections.len() > max_matches {
-                max_matches = intersections.len();
-                println!("{max_matches}: {:?}", offset);
-            }
-        }
+    //         if range.contains(&collision.x)
+    //             && range.contains(&collision.y)
+    //             && a.is_in_future(collision)
+    //             && b.is_in_future(collision) {
+    //         } else {
+    //             continue;
+    //         }
+
+    //         if !collision.is_integer() {
+    //             continue;
+    //         }
+    //         println!("collision at {collision:?}");
+    //         println!("maybe = ({y}, {x})");
+    //         let collision = Hailstone {
+    //             position: collision,
+    //             velocity: Velocity {
+    //                 y: 0.0,
+    //                 x: 0.0,
+    //                 z: 0.0,
+    //             },
+    //         };
+
+    //         if hailstones.into_iter().all(|hailstone| {
+    //             hailstone
+    //                 .xy_intersect(&collision)
+    //                 .is_some_and(|c| c.is_integer())
+    //         }) {
+    //             println!("answer = ({y}, {x})");
+    //         }
+
+    //         // solve system of equations for x & y
+    //         // // let (intersections, parallel) = find_xy_intersections(&hailstones, range.clone());
+    //         // if intersections.len() + parallel == target {
+    //         //     println!("{offset:?} = {} ({parallel})", intersections.len());
+    //         // }
+
+    //         // // TODO: z?
+
+    //         // if intersections.len() > max_matches {
+    //         //     max_matches = intersections.len();
+    //         //     println!(
+    //         //         "{max_matches}: {offset:?} ({parallel})",
+    //         //     );
+    //         //     let mut t = tally(intersections).into_iter().collect::<Vec<_>>();
+    //         //     t.sort_by_key(|(_, x)| *x);
+
+    //         //     for t in t {
+    //         //         println!("{t:?}");
+    //         //     }
+    //         //     std::process::exit(0);
+    //         // for p in intersections {
+    //         // println!("{p:?}");
+    //         // std::thread::sleep(std::time::Duration::from_millis(1));
+    //         // }
+    //         // }
+    //     }
+    // }
+
+    // for hailstone in hailstones.iter().skip(1).take(4) {
+    for hailstone in hailstones.iter().take(4) {
+        let Hailstone {
+            position:
+                Point {
+                    z: hpz,
+                    y: hpy,
+                    x: hpx,
+                },
+            velocity:
+                Velocity {
+                    z: hvz,
+                    y: hvy,
+                    x: hvx,
+                },
+        } = hailstone;
+
+        // println!("{hvx}y - {hpy}*{hvx} + {hpy}*vx - {hvy}x + {hpx}*{hvy} - {hpx}vy");
+        // println!("{hvx}y - {hpy_hvx} + {hpy}*vx - {hvy}x + {hpx_hvy} - {hpx}vy", hpy_hvx = hpy * hvx, hpx_hvy = hpx * hvy);
+        // with variable shorthands:
+        // println!("{hvx}a - {hpy_hvx} + {hpy}b - {hvy}c + {hpx_hvy} - {hpx}d", hpy_hvx = hpy * hvx, hpx_hvy = hpx * hvy);
+        // with constant term:
+        println!("a*b - c*d = {hvx}a - {hpy_hvx} + {hpy}b - {hvy}c + {hpx_hvy} - {hpx}d", hpy_hvx = hpy * hvx, hpx_hvy = hpx * hvy);
+        // a = y; b = vx; c = x; d = vy
+        // And swapping in z for y:
+        println!("a*b - c*d = {hvx}a - {hpz_hvx} + {hpz}b - {hvz}c + {hpx_hvz} - {hpx}d", hpz_hvx = hpz * hvx, hpx_hvz = hpx * hvz);
+        // a = z; b = vx; c = x; d = vz
+
+        // plug all that in to WolframAlpha and you get:
+        // b = vx = 314
+        // d1 = vy = 19
+        // d2 = vz = 197
+        //
+        // c = x = 133619443970450
+        // a1 = y = 263917577518425
+        // a2 = z = 180640699244168
+
     }
 
-    dbg!(max_matches);
+    println!("part2 = {}", 133619443970450u64 + 263917577518425 + 180640699244168);
+
+    // dbg!(max_matches);
     // }
+}
+
+/// An iterator that "spirals" out from the start
+///
+/// E.g., it yields 0, 1, -1, 2, -2, 3, -3, 4, etc.
+#[derive(Debug, Copy, Clone, Default)]
+struct Spiral {
+    x: i32,
+}
+
+impl Spiral {
+    fn new(start: i32) -> Self {
+        Self { x: start }
+    }
+}
+
+impl Iterator for Spiral {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ret = self.x;
+
+        match self.x.signum() {
+            -1 => self.x = -self.x + 1,
+            0 => self.x += 1,
+            1 => self.x = -self.x,
+            _ => unreachable!(),
+        };
+
+        Some(ret)
+    }
+}
+
+fn tally(v: Vec<Point>) -> HashMap<(i64, i64, i64), usize> {
+    let mut map: HashMap<_, _> = [].into();
+
+    for p in v {
+        let item = (p.x as i64, p.y as i64, p.z as i64);
+        map.entry(item).and_modify(|x| *x += 1).or_insert(1);
+    }
+
+    map
 }
