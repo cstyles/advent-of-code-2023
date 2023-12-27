@@ -8,4 +8,5 @@ void main(List<String> arguments) async {
   final grid = dart.Grid(input.trimRight());
   final start = grid.start();
   final pipe = dart.part1(grid, start);
+  dart.part2(grid, pipe, start);
 }

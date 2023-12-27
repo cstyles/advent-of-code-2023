@@ -48,6 +48,44 @@ class Grid {
   Tile lookup(Point point) {
     return grid[point.y][point.x];
   }
+
+  void removeSuperfluousTiles(Set<Point> pipe) {
+    for (var y = 0; y < height(); y++) {
+      for (var x = 0; x < width(); x++) {
+        if (!pipe.contains(Point(y, x))) {
+          grid[y][x] = Tile.ground;
+        }
+      }
+    }
+  }
+
+  Tile calculateStart(Point start) {
+    final up = [Tile.vertical, Tile.southwest, Tile.southeast]
+        .contains(lookup(start.up()!));
+    final down = [Tile.vertical, Tile.northwest, Tile.northeast]
+        .contains(lookup(start.down(height())!));
+    final left = [Tile.horizontal, Tile.northeast, Tile.southeast]
+        .contains(lookup(start.left()!));
+    final right = [Tile.horizontal, Tile.northwest, Tile.southwest]
+        .contains(lookup(start.right(width())!));
+
+    switch ((up, down, left, right)) {
+      case (true, true, false, false):
+        return Tile.vertical;
+      case (true, false, true, false):
+        return Tile.northwest;
+      case (true, false, false, true):
+        return Tile.northeast;
+      case (false, true, true, false):
+        return Tile.southwest;
+      case (false, true, false, true):
+        return Tile.southeast;
+      case (false, false, true, true):
+        return Tile.horizontal;
+      default:
+        throw 'unreachable :(';
+    }
+  }
 }
 
 enum Tile {
@@ -216,6 +254,61 @@ Set<Point> part1(Grid grid, Point start) {
   print('part1 = $part1');
 
   return pipe;
+}
+
+void part2(Grid grid, Set<Point> pipe, Point start) {
+  grid.removeSuperfluousTiles(pipe);
+  grid.grid[start.y][start.x] = grid.calculateStart(start);
+
+  var inside = <Point>{};
+  for (var y = 0; y < grid.height(); y++) {
+    for (var x = 0; x < grid.width(); x++) {
+      final start = Point(y, x);
+      if (pipe.contains(start)) {
+        continue;
+      }
+
+      var crossings = 0;
+      Direction? lastCross;
+      Point? point = start;
+
+      while (point != null) {
+        final tile = grid.lookup(point);
+
+        if (tile == Tile.horizontal) {
+          crossings += 1;
+          lastCross = null;
+        } else if ([Tile.northwest, Tile.southwest].contains(tile) &&
+            lastCross == null) {
+          lastCross = Direction.left;
+        } else if ([Tile.northwest, Tile.southwest].contains(tile) &&
+            lastCross == Direction.right) {
+          crossings += 1;
+          lastCross = null;
+        } else if ([Tile.northeast, Tile.southeast].contains(tile) &&
+            lastCross == null) {
+          lastCross = Direction.right;
+        } else if ([Tile.northeast, Tile.southeast].contains(tile) &&
+            lastCross == Direction.left) {
+          crossings += 1;
+          lastCross = null;
+        } else if (tile == Tile.northwest && lastCross == Direction.left) {
+          lastCross = null;
+        } else if (tile == Tile.northeast && lastCross == Direction.right) {
+          lastCross = null;
+        }
+
+        point = point.down(grid.height());
+      }
+
+      if (crossings % 2 == 1) {
+        inside.add(start);
+      }
+    }
+  }
+
+  final part2 = inside.length;
+  print('part2 = $part2');
 }
 
 enum Direction {
