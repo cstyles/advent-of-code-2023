@@ -27,7 +27,7 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | 21  | —             | —                                                     | —            | [day-21](day-21/rust/src/main.rs)  | 40.3              |
 | 22  | [TypeScript]  | [22.ts](day-22/typescript/22.ts)                      | 876          | [day-22](day-22/rust/src/main.rs)  | 131               |
 | 23  | —             | —                                                     | —            | [day-23](day-23/rust/src/main.rs)  | 4,500             |
-| 24  | —             | —                                                     | —            | [day-24](day-24/rust/src/main.rs)  | —                 |
+| 24  | —             | —                                                     | —            | [day-24](day-24/rust/src/main.rs)  | 2.3               |
 | 25  | —             | —                                                     | —            | [day-25](day-25/rust/src/main.rs)  | 4,234             |
 
 All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
