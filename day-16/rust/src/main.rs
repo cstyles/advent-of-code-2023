@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::iter::repeat;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Tile {
@@ -111,24 +110,24 @@ fn main() {
     let width = map[0].len() as u8;
 
     let part2 = std::thread::scope(|scope| {
-        let top = repeat(0).zip(0..width).map(|(y, x)| Beam {
-            y,
+        let top = (0..width).map(|x| Beam {
+            y: 0,
             x,
             direction: Direction::Down,
         });
-        let bottom = repeat(height - 1).zip(0..width).map(|(y, x)| Beam {
-            y,
+        let bottom = (0..width).map(|x| Beam {
+            y: height - 1,
             x,
             direction: Direction::Up,
         });
-        let left = (0..height).zip(repeat(0)).map(|(y, x)| Beam {
+        let left = (0..height).map(|y| Beam {
             y,
-            x,
+            x: 0,
             direction: Direction::Right,
         });
-        let right = (0..height).zip(repeat(width - 1)).map(|(y, x)| Beam {
+        let right = (0..height).map(|y| Beam {
             y,
-            x,
+            x: width - 1,
             direction: Direction::Left,
         });
 
