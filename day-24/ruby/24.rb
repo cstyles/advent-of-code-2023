@@ -90,6 +90,36 @@ def main
   hailstones = input.map { Hailstone.parse _1 }
   part1 = find_xy_intersections(hailstones, range).length
   puts "part1 = #{part1}"
+
+  hailstones[...4].each do |hailstone|
+    position, velocity = hailstone.deconstruct
+    hpx, hpy, hpz = position.deconstruct
+    hvx, hvy, hvz = velocity.deconstruct
+
+    # See notes.txt for an explanation of the algebra that yielded these formulae.
+
+    hpy_hvx = hpy * hvx
+    hpx_hvy = hpx * hvy
+    puts "a*b - c*d = #{hvx}a - #{hpy_hvx} + #{hpy}b - #{hvy}c + #{hpx_hvy} - #{hpx}d"
+    # where a = y; b = vx; c = x; d = vy
+
+    # swapping in z for y:
+    hpz_hvx = hpz * hvx
+    hpx_hvz = hpx * hvz
+    puts "a*b - c*d = #{hvx}a - #{hpz_hvx} + #{hpz}b - #{hvz}c + #{hpx_hvz} - #{hpx}d"
+
+    # Plug all that in to WolframAlpha and you get:
+    # b  = vx = 314
+    # d1 = vy = 19
+    # d2 = vz = 197
+    #
+    # c  = x = 133619443970450
+    # a1 = y = 263917577518425
+    # a2 = z = 180640699244168
+  end
+
+  part2 = 133_619_443_970_450 + 263_917_577_518_425 + 180_640_699_244_168
+  puts "part2 = #{part2}"
 end
 
 main
