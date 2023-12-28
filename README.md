@@ -24,11 +24,11 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | [18] | [Moonscript]  | [18.moon](day-18/moonscript/18.moon)                  | 48.3         | [day-18](day-18/rust/src/main.rs)  | 1.8               |
 | [19] | [Haskell]     | [19.hs](day-19/haskell/19.hs)                         | 17.0         | [day-19](day-19/rust/src/main.rs)  | 2.3               |
 | [20] | [Scala]       | [Main.scala](day-20/scala/src/main/scala/Main.scala)  | 433          | [day-20](day-20/rust/src/main.rs)  | 16.2              |
-| [21] | —             | —                                                     | —            | [day-21](day-21/rust/src/main.rs)  | 40.3              |
+| [21] | [Python]      | [21.py](day-21/python/21.py)                          | 690          | [day-21](day-21/rust/src/main.rs)  | 40.3              |
 | [22] | [TypeScript]  | [22.ts](day-22/typescript/22.ts)                      | 876          | [day-22](day-22/rust/src/main.rs)  | 131               |
 | [23] | —             | —                                                     | —            | [day-23](day-23/rust/src/main.rs)  | 4,500             |
-| [24] | —             | —                                                     | —            | [day-24](day-24/rust/src/main.rs)  | 2.3               |
-| [25] | —             | —                                                     | —            | [day-25](day-25/rust/src/main.rs)  | 4,234             |
+| [24] | [Ruby]        | [24.rb](day-24/ruby/24.rb)                            | 160          | [day-24](day-24/rust/src/main.rs)  | 2.3               |
+| [25] | [Go]          | [25.go](day-25/go/25.go)                              | 5,866        | [day-25](day-25/rust/src/main.rs)  | 4,234             |
 
 All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
 
@@ -52,7 +52,10 @@ All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
 [Moonscript]: https://moonscript.org/
 [Haskell]: https://www.haskell.org/
 [Scala]: https://www.scala-lang.org/
+[Python]: https://www.python.org/
 [TypeScript]: https://www.typescriptlang.org/
+[Ruby]: https://www.ruby-lang.org/
+[Go]: https://go.dev/
 
 [1]: https://adventofcode.com/2023/day/1
 [2]: https://adventofcode.com/2023/day/2
