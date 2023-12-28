@@ -92,9 +92,9 @@ def main
   puts "part1 = #{part1}"
 
   hailstones[...4].each do |hailstone|
-    position, velocity = hailstone.deconstruct
-    hpx, hpy, hpz = position.deconstruct
-    hvx, hvy, hvz = velocity.deconstruct
+    hailstone => position, velocity
+    position => hpx, hpy, hpz
+    velocity => hvx, hvy, hvz
 
     # See notes.txt for an explanation of the algebra that yielded these formulae.
 
