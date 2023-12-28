@@ -83,12 +83,12 @@ fn graph_size(map: &Map, start: &str, bad_edges: &[Edge]) -> usize {
 
 type Indices<'a> = HashMap<&'a str, usize>;
 type Distances = Vec<Vec<usize>>;
-type Paths<'a> = Vec<Vec<Option<&'a str>>>;
+type Paths<'a> = Vec<Vec<&'a str>>;
 
 /// Floyd Warshall w/ path reconstruction.
 fn floyd_warshall<'a>(map: &'a Map, indices: &Indices<'a>) -> (Distances, Paths<'a>) {
     let mut distances: Distances = vec![vec![usize::MAX; map.len()]; map.len()];
-    let mut paths: Paths = vec![vec![None; map.len()]; map.len()];
+    let mut paths: Paths = vec![vec![""; map.len()]; map.len()];
 
     let mut edges = HashSet::<(&str, &str)>::default();
     for (k, v) in map.iter() {
@@ -105,13 +105,13 @@ fn floyd_warshall<'a>(map: &'a Map, indices: &Indices<'a>) -> (Distances, Paths<
 
         distances[a_idx][b_idx] = 1;
         distances[b_idx][a_idx] = 1;
-        paths[a_idx][b_idx] = Some(a);
-        paths[b_idx][a_idx] = Some(b);
+        paths[a_idx][b_idx] = a;
+        paths[b_idx][a_idx] = b;
     }
 
     for (vertex, &i) in indices.iter() {
         distances[i][i] = 0;
-        paths[i][i] = Some(vertex);
+        paths[i][i] = vertex;
     }
 
     for k in 0..map.len() {
@@ -133,6 +133,11 @@ fn floyd_warshall<'a>(map: &'a Map, indices: &Indices<'a>) -> (Distances, Paths<
         }
     }
 
+    assert!(distances.iter().all(|d| d.iter().all(|x| *x != usize::MAX)));
+    assert!(paths
+        .iter()
+        .all(|path| path.iter().all(|node| !node.is_empty())));
+
     (distances, paths)
 }
 
@@ -146,13 +151,9 @@ fn fw_path<'a>(
     let source_idx = *indices.get(source).unwrap();
     let mut dest_idx = *indices.get(dest).unwrap();
 
-    if paths[source_idx][dest_idx].is_none() {
-        return vec![];
-    }
-
     let mut path = vec![dest];
     while source != dest {
-        dest = paths[source_idx][dest_idx].unwrap();
+        dest = paths[source_idx][dest_idx];
         dest_idx = *indices.get(dest).unwrap();
 
         path.insert(0, dest);
