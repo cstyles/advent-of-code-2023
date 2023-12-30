@@ -1,6 +1,6 @@
 # Advent of Code 2023
 
-An attempt to solve Advent of Code 2023 using a different language each day.
+## Bird's eye view:
 
 | Day  | Language      | Solution                                              | Runtime (ms) | Rust solution                      | Rust runtime (ms) |
 | ---- | ------------- | ----------------------------------------------------- | ------------ | ---------------------------------- | ------------------|
@@ -31,6 +31,60 @@ An attempt to solve Advent of Code 2023 using a different language each day.
 | [25] | [Go]          | [25.go](day-25/go/25.go)                              | 5,866        | [day-25](day-25/rust/src/main.rs)  | 4,234             |
 
 All benchmarks produced with [hyperfine](https://github.com/sharkdp/hyperfine).
+
+## What's all this?
+
+[Advent of Code](https://adventofcode.com) is an annual "advent calendar"
+event/challenge in which puzzles are released every day of December up to
+Christmas Day in roughly increasing order of difficulty. This repository
+represents my attempt to solve Advent of Code 2023 using a different language
+each day (the "Polyglot Challenge", as I like to call it).
+
+## What are the rules?
+
+1. Every day must be solved in a different language. If I want to use a
+   language that I used on a prior day, I first have to go back and solve that
+   day in a different language.
+2. Solutions must only use the standard library.
+3. Have fun!
+
+## How did you choose which languages to use?
+
+Honestly, it's more madness than method. I have a big ol' document full of
+languages I'd like to try. Other than front-loading weird languages for the
+easier days and, conversely, saving languages I know well/are easy to learn for
+the final stretch, I mostly picked languages randomly. There's a *bit* more
+thought put into it than that (e.g., I avoided functional languages for
+problems with multidimensional grids) but mostly I just relied on vibes.
+
+## Should I do something like this?
+
+Probably not. Maybe if you did it in the "off-season" it wouldn't be so bad but
+trying to juggle nightly puzzles, learning a new language, and typical holiday
+season obligations while still having sufficient time for sleep & work is a
+tall order. Also, a few hours googling "how to do X in Y language" won't give
+you much more than a surface level understanding of a language.
+
+## Any highlights?
+
+As always, Rust, Ruby, and OCaml stand out as my favorites. I definitely want
+to spend more time with Crystal, Swift, Scala, and Clojure. Uiua is the most
+approachable array language I've tried and I recommend giving it a spin if
+you'd like to expand your ideas of how computation can be expressed.
+
+## Any lowlights?
+
+I learned that Lua is really not my jam and, by extension, anything built atop
+it. I really wanted to like Fennel and Moonscript but Lua infects everything it
+touches and the two suffer as a result.
+
+## Did you make the leaderboard?
+
+Nope but I placed 105<sup>th</sup> for day 23, part 2 which is the closest I've ever come!
+
+## The quadratic formula is not a programming language!
+
+I bet you're fun at parties.
 
 [Uiua]: https://www.uiua.org/
 [Fish shell]: https://fishshell.com/
